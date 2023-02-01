@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"context"
+	"context"
 	"fmt"
 	"log"
 
@@ -26,10 +26,7 @@ var yesNoKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("No")),
 )
 
-var optionKeyboard = tgbotapi.NewReplyKeyboard(
-	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("WhoIs")),
-)
+
 
 var mainKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
@@ -38,7 +35,8 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 
 // to operate the bot, put a text file containing key for your bot acquired from telegram "botfather" to the same directory with this file
 var tgApiKey, err = os.ReadFile(".secret")
-var bot, error1 = tgbotapi.NewBotAPI(string(tgApiKey))
+
+
 
 // type containing all the info about user input
 type user struct {
@@ -71,7 +69,7 @@ const envLoc = ".env"
 func main() {
 
 	loadEnv()
-	//ctx := context.Background()
+	ctx := context.Background()
 	//pk := myenv["PK"] // load private key from env
 
 	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT"
@@ -84,7 +82,7 @@ func main() {
 	//var baseURL = "https://ikytest-gw0gy01is-s0lidarnost.vercel.app/"
 	//var baseURL = myenv["BASEURL"]
 
-	bot, err = tgbotapi.NewBotAPI(string(tgApiKey))
+	bot, err := tgbotapi.NewBotAPI(string(tgApiKey))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -151,7 +149,6 @@ func main() {
 						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,ai_key}
 						sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client}
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
-						msg.ReplyMarkup = optionKeyboard
 						bot.Send(msg)
 						updateDb.dialog_status = 2
 						userDatabase[update.Message.From.ID] = updateDb
@@ -160,7 +157,19 @@ func main() {
 					fallthrough
 				case 2:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-
+						promt := update.Message.Text
+						req := CreateSimpleRequest(promt)
+						c := sessionDatabase[update.Message.From.ID].gpt_client
+						resp, err := c.CreateCompletion(ctx, req)
+						if err != nil {
+							return
+						}
+						fmt.Println(resp.Choices[0].Text)
+						resp_text := resp.Choices[0].Text
+						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,resp_text)
+						bot.Send(msg)
+						updateDb.dialog_status = 2
+						userDatabase[update.Message.From.ID] = updateDb
 					}
 				}
 			}
@@ -180,5 +189,13 @@ func loadEnv() {
 func CreateClient(AI_apiKey string) (*gogpt.Client){
 	client := gogpt.NewClient(AI_apiKey)
 	return client
+}
+
+func CreateSimpleRequest(input string) (gogpt.CompletionRequest){
+	req := gogpt.CompletionRequest{
+		Model:     gogpt.GPT3Ada,
+		Prompt:    input,
+	}
+	return req;
 }
 
