@@ -1,13 +1,18 @@
 package main
 
 import (
-	"context"
+	//"context"
 	"fmt"
 	"log"
 
 	"os"
 
+	//"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
+
+	//gpt3 "github.com/PullRequestInc/go-gpt3"
+
+	gogpt "github.com/sashabaranov/go-gpt3"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
 	//passport "IKY-telegram-bot/artifacts/TGPassport"
@@ -28,7 +33,7 @@ var optionKeyboard = tgbotapi.NewReplyKeyboard(
 
 var mainKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("Verify personal wallet")),
+		tgbotapi.NewKeyboardButton("Start!")),
 )
 
 // to operate the bot, put a text file containing key for your bot acquired from telegram "botfather" to the same directory with this file
@@ -40,11 +45,20 @@ type user struct {
 	tgid          int64
 	tg_username   string
 	dialog_status int64
+	gpt_key string
+	//gpt_client gpt3.Client
+}
+
+type ai_session struct {
+	gpt_key		string
+	gpt_client	*gogpt.Client
 }
 
 
 // main database for dialogs, key (int64) is telegram user id
 var userDatabase = make(map[int64]user) // consider to change in persistend data storage?
+
+var sessionDatabase = make(map[int64]ai_session)
 
 var msgTemplates = make(map[string]string)
 
@@ -57,14 +71,14 @@ const envLoc = ".env"
 func main() {
 
 	loadEnv()
-	ctx := context.Background()
+	//ctx := context.Background()
 	//pk := myenv["PK"] // load private key from env
 
-	msgTemplates["hello"] = "Hey, this bot is attaching personal wallets to telegram user & collective wallets to chat id"
-	msgTemplates["case0"] = "Open following link in metamask broswer"
+	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT"
+	msgTemplates["case0"] = "Input your openAI API key. It can be created at https://platform.openai.com/account/api-keys"
 	msgTemplates["await"] = "Awaiting for verification"
-	msgTemplates["case1"] = "You have successfully authorized your wallet to your account. Now you can use additional functions"
-	msgTemplates["who_is"] = "Input wallet address to know it's associated telegram nickname"
+	msgTemplates["case1"] = "You etablish connection with OpenAI, now try to promt something"
+
 
 	//var baseURL = "http://localhost:3000/"
 	//var baseURL = "https://ikytest-gw0gy01is-s0lidarnost.vercel.app/"
@@ -89,7 +103,7 @@ func main() {
 		if update.Message != nil {
 			if _, ok := userDatabase[update.Message.From.ID]; !ok {
 
-				userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0}
+				userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,""}
 				msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["hello"])
 				msg.ReplyMarkup = mainKeyboard
 				bot.Send(msg)
@@ -127,14 +141,25 @@ func main() {
 						userDatabase[update.Message.From.ID] = updateDb
 
 					}
-				//	fallthrough // МЫ ЛЕД ПОД НОГАМИ МАЙОРА!
+					fallthrough // МЫ ЛЕД ПОД НОГАМИ МАЙОРА!
+					// 
 				case 1:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
+
+						ai_key := update.Message.Text
+						ai_client := CreateClient(ai_key)
+						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,ai_key}
+						sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client}
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
 						msg.ReplyMarkup = optionKeyboard
 						bot.Send(msg)
 						updateDb.dialog_status = 2
 						userDatabase[update.Message.From.ID] = updateDb
+
+					}
+					fallthrough
+				case 2:
+					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 
 					}
 				}
@@ -150,5 +175,10 @@ func loadEnv() {
 	if myenv, err = godotenv.Read(envLoc); err != nil {
 		log.Printf("could not load env from %s: %v", envLoc, err)
 	}
+}
+
+func CreateClient(AI_apiKey string) (*gogpt.Client){
+	client := gogpt.NewClient(AI_apiKey)
+	return client
 }
 
