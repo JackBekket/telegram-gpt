@@ -139,7 +139,7 @@ func main() {
 						userDatabase[update.Message.From.ID] = updateDb
 
 					}
-					fallthrough // МЫ ЛЕД ПОД НОГАМИ МАЙОРА!
+					//fallthrough // МЫ ЛЕД ПОД НОГАМИ МАЙОРА!
 					// 
 				case 1:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
@@ -154,10 +154,11 @@ func main() {
 						userDatabase[update.Message.From.ID] = updateDb
 
 					}
-					fallthrough
+					//fallthrough
 				case 2:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 						promt := update.Message.Text
+						fmt.Println(promt)
 						req := CreateSimpleRequest(promt)
 						c := sessionDatabase[update.Message.From.ID].gpt_client
 						resp, err := c.CreateCompletion(ctx, req)
@@ -188,13 +189,18 @@ func loadEnv() {
 
 func CreateClient(AI_apiKey string) (*gogpt.Client){
 	client := gogpt.NewClient(AI_apiKey)
+	log.Println(client.ListEngines)
+	log.Println(client.ListModels)
+	log.Println(client.Answers)
 	return client
 }
 
 func CreateSimpleRequest(input string) (gogpt.CompletionRequest){
 	req := gogpt.CompletionRequest{
-		Model:     gogpt.GPT3Ada,
+		Model:     gogpt.GPT3TextDavinci003,
+		MaxTokens: 2048,
 		Prompt:    input,
+		Echo: true,
 	}
 	return req;
 }
