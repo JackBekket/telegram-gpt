@@ -7,7 +7,6 @@ import (
 
 	"os"
 
-	//"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
 
 	//gpt3 "github.com/PullRequestInc/go-gpt3"
@@ -15,7 +14,6 @@ import (
 	gogpt "github.com/sashabaranov/go-gpt3"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
-	//passport "IKY-telegram-bot/artifacts/TGPassport"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -74,19 +72,15 @@ func main() {
 
 	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT"
 	msgTemplates["case0"] = "Input your openAI API key. It can be created at https://platform.openai.com/account/api-keys"
-	msgTemplates["await"] = "Awaiting for verification"
+	msgTemplates["await"] = "Awaiting"
 	msgTemplates["case1"] = "You etablish connection with OpenAI, now try to promt something"
 
 
-	//var baseURL = "http://localhost:3000/"
-	//var baseURL = "https://ikytest-gw0gy01is-s0lidarnost.vercel.app/"
-	//var baseURL = myenv["BASEURL"]
 
 	bot, err := tgbotapi.NewBotAPI(string(tgApiKey))
 	if err != nil {
 		log.Panic(err)
 	}
-
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -163,7 +157,11 @@ func main() {
 						c := sessionDatabase[update.Message.From.ID].gpt_client
 						resp, err := c.CreateCompletion(ctx, req)
 						if err != nil {
-							return
+							//return
+							log.Println("error :", err)
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,err.Error())
+							bot.Send(msg)
+
 						}
 						fmt.Println(resp.Choices[0].Text)
 						resp_text := resp.Choices[0].Text
