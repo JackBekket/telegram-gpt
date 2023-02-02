@@ -24,7 +24,11 @@ var yesNoKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("No")),
 )
 
-
+var chooseModelKeyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("GPT3"),
+		tgbotapi.NewKeyboardButton("Codex")),
+)
 
 var mainKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
@@ -48,6 +52,7 @@ type user struct {
 type ai_session struct {
 	gpt_key		string
 	gpt_client	*gogpt.Client
+	gpt_model string
 }
 
 
@@ -73,7 +78,7 @@ func main() {
 	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT"
 	msgTemplates["case0"] = "Input your openAI API key. It can be created at https://platform.openai.com/account/api-keys"
 	msgTemplates["await"] = "Awaiting"
-	msgTemplates["case1"] = "You etablish connection with OpenAI, now try to promt something"
+	msgTemplates["case1"] = "Choose model to use. GPT3 is for text-based tasks, Codex for codegeneration."
 
 
 
@@ -123,12 +128,6 @@ func main() {
 						fmt.Println(tgid)
 						fmt.Println(user_name)
 
-						/*
-						//link := baseURL + tg_id_query + tgid_string + tg_username_query + "@" + user_name
-						msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, link)
-						bot.Send(msg)
-						*/
-
 						updateDb.dialog_status = 1
 						userDatabase[update.Message.From.ID] = updateDb
 
@@ -137,12 +136,13 @@ func main() {
 					// 
 				case 1:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-
+						gpt3_m_string := gogpt.GPT3TextDavinci003
 						ai_key := update.Message.Text
 						ai_client := CreateClient(ai_key)
 						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,ai_key}
-						sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client}
+						sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
+						msg.ReplyMarkup = chooseModelKeyboard
 						bot.Send(msg)
 						updateDb.dialog_status = 2
 						userDatabase[update.Message.From.ID] = updateDb
@@ -151,9 +151,61 @@ func main() {
 					//fallthrough
 				case 2:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
+						if update.Message.Text == "GPT3" {
+							// TODO: Write down user choise
+							log.Println(update.Message.Text)
+							gpt3_m_string := gogpt.GPT3TextDavinci003
+							
+							log.Println(gpt3_m_string)
+							ai_client := sessionDatabase[update.Message.From.ID].gpt_client
+							ai_key := sessionDatabase[update.Message.From.ID].gpt_key
+							sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
+
+							session_model := sessionDatabase[update.Message.From.ID].gpt_model
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
+							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+							bot.Send(msg)
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "You are successfully connected to chatGPT now try to ask something")
+							bot.Send(msg)
+
+							updateDb.dialog_status = 3
+							userDatabase[update.Message.From.ID] = updateDb
+						} 
+						if update.Message.Text == "Codex" {
+							// Use codex model
+							log.Println(update.Message.Text)
+							gpt3_m_string := gogpt.CodexCodeDavinci002
+							log.Println(gpt3_m_string)
+							ai_client := sessionDatabase[update.Message.From.ID].gpt_client
+							ai_key := sessionDatabase[update.Message.From.ID].gpt_key
+							sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
+
+							session_model := sessionDatabase[update.Message.From.ID].gpt_model
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
+							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+							bot.Send(msg)
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "You are successfully connected to chatGPT now try to ask something")
+							bot.Send(msg)
+
+							updateDb.dialog_status = 3
+							userDatabase[update.Message.From.ID] = updateDb
+						} 
+						if update.Message.Text != "GPT3" && update.Message.Text != "Codex" {
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "type GPT3 or Codex")
+							log.Println(update.Message.Text)
+							bot.Send(msg)
+							updateDb.dialog_status = 2
+							userDatabase[update.Message.From.ID] = updateDb
+						}
+					}
+
+				case 3:
+					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 						promt := update.Message.Text
 						fmt.Println(promt)
-						req := CreateSimpleRequest(promt)
+						gpt_model := sessionDatabase[update.Message.From.ID].gpt_model
+						log.Println(gpt_model)
+						req := CreateComplexRequest(promt,gpt_model)
 						c := sessionDatabase[update.Message.From.ID].gpt_client
 						resp, err := c.CreateCompletion(ctx, req)
 						if err != nil {
@@ -167,7 +219,7 @@ func main() {
 						resp_text := resp.Choices[0].Text
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,resp_text)
 						bot.Send(msg)
-						updateDb.dialog_status = 2
+						updateDb.dialog_status = 3
 						userDatabase[update.Message.From.ID] = updateDb
 					}
 				}
@@ -200,6 +252,16 @@ func CreateSimpleRequest(input string) (gogpt.CompletionRequest){
 		Prompt:    input,
 		Echo: true,
 	}
-	return req;
+	return req
 }
 
+// model should be gogpt.GPT3TextDavinci003 or gogpt.CodexCodeDavinci002
+func CreateComplexRequest (input string, model string) (gogpt.CompletionRequest) {
+	req := gogpt.CompletionRequest{
+		Model: model,
+		MaxTokens: 2048,
+		Prompt: input,
+		Echo: true,
+	}
+	return req
+}
