@@ -213,6 +213,10 @@ func main() {
 							log.Println("error :", err)
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,err.Error())
 							bot.Send(msg)
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,"an error has occured. In order to proceed we need to recreate client and initialize new session")
+							bot.Send(msg)
+							updateDb.dialog_status = 0
+							userDatabase[update.Message.From.ID] = updateDb
 
 						}
 						fmt.Println(resp.Choices[0].Text)
