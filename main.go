@@ -205,6 +205,12 @@ func main() {
 						fmt.Println(promt)
 						gpt_model := sessionDatabase[update.Message.From.ID].gpt_model
 						log.Println(gpt_model)
+
+						if update.Message.Text == "/restart" {
+							updateDb.dialog_status = 4
+							userDatabase[update.Message.From.ID] = updateDb
+						} else {
+
 						req := CreateComplexRequest(promt,gpt_model)
 						c := sessionDatabase[update.Message.From.ID].gpt_client
 						resp, err := c.CreateCompletion(ctx, req)
@@ -224,6 +230,13 @@ func main() {
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,resp_text)
 						bot.Send(msg)
 						updateDb.dialog_status = 3
+						userDatabase[update.Message.From.ID] = updateDb
+						}
+					}
+
+				case 4:
+					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
+						updateDb.dialog_status = 0
 						userDatabase[update.Message.From.ID] = updateDb
 					}
 				}
