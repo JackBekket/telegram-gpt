@@ -18,10 +18,10 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var yesNoKeyboard = tgbotapi.NewReplyKeyboard(
+var languageKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("Yes"),
-		tgbotapi.NewKeyboardButton("No")),
+		tgbotapi.NewKeyboardButton("eng"),
+		tgbotapi.NewKeyboardButton("ru")),
 )
 
 var chooseModelKeyboard = tgbotapi.NewReplyKeyboard(
@@ -121,6 +121,7 @@ func main() {
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case0"])
+						msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
 						bot.Send(msg)
 
 						tgid := userDatabase[update.Message.From.ID].tgid
@@ -136,11 +137,14 @@ func main() {
 					// 
 				case 1:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-						gpt3_m_string := gogpt.GPT3TextDavinci003
+						//gpt3_m_string := gogpt.GPT3TextDavinci003
 						ai_key := update.Message.Text
-						ai_client := CreateClient(ai_key)
+						//tg_username := update.Message.Chat.UserName
+						//ai_client := CreateClient(ai_key)
 						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,ai_key}
-						sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
+						//user := userDatabase[update.Message.From.ID]
+						updateDb.gpt_key = ai_key
+						//sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
 						msg.ReplyMarkup = chooseModelKeyboard
 						bot.Send(msg)
@@ -165,7 +169,8 @@ func main() {
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
 							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
 							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "You are successfully connected to chatGPT now try to ask something")
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself.")
+							msg.ReplyMarkup = languageKeyboard
 							bot.Send(msg)
 
 							updateDb.dialog_status = 3
@@ -184,7 +189,8 @@ func main() {
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
 							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
 							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "You are successfully connected to chatGPT now try to ask something")
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself")
+							msg.ReplyMarkup = languageKeyboard
 							bot.Send(msg)
 
 							updateDb.dialog_status = 3
@@ -200,41 +206,43 @@ func main() {
 					}
 
 				case 3:
-					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
+					
+						if update.Message.Text == "eng" {
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "connecting to openAI")
+							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+							bot.Send(msg)
+							ai_key := userDatabase[update.Message.From.ID].gpt_key
+							un := userDatabase[update.Message.From.ID].tg_username
+							ai_model := sessionDatabase[update.Message.From.ID].gpt_model
+							go SetupSequenceWithKey(update.Message.From.ID,bot,ai_key,un,ai_model,update.Message.Text,ctx)
+
+							
+						}
+
+						if update.Message.Text == "ru" {
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "connecting to openAI")
+							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+							bot.Send(msg)
+							ai_key := userDatabase[update.Message.From.ID].gpt_key
+							un := userDatabase[update.Message.From.ID].tg_username
+							ai_model := sessionDatabase[update.Message.From.ID].gpt_model
+							go SetupSequenceWithKey(update.Message.From.ID,bot,ai_key,un,ai_model,update.Message.Text,ctx)
+
+							
+						}
+
+					
+				case 4:
+					//	if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 						promt := update.Message.Text
 						fmt.Println(promt)
 						gpt_model := sessionDatabase[update.Message.From.ID].gpt_model
 						log.Println(gpt_model)
 
-						if update.Message.Text == "/restart" {
-							updateDb.dialog_status = 4
-							userDatabase[update.Message.From.ID] = updateDb
-						} else {
+						go StartDialogSequence(promt, update.Message.From.ID, ctx, *bot)
 
-						req := CreateComplexRequest(promt,gpt_model)
-						c := sessionDatabase[update.Message.From.ID].gpt_client
-						resp, err := c.CreateCompletion(ctx, req)
-						if err != nil {
-							//return
-							log.Println("error :", err)
-							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,err.Error())
-							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,"an error has occured. In order to proceed we need to recreate client and initialize new session")
-							bot.Send(msg)
-							updateDb.dialog_status = 0
-							userDatabase[update.Message.From.ID] = updateDb
 
-						}
-						fmt.Println(resp.Choices[0].Text)
-						resp_text := resp.Choices[0].Text
-						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid,resp_text)
-						bot.Send(msg)
-						updateDb.dialog_status = 3
-						userDatabase[update.Message.From.ID] = updateDb
-						}
-					}
-
-				case 4:
+				case 5:
 					if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
 						updateDb.dialog_status = 0
 						userDatabase[update.Message.From.ID] = updateDb
@@ -254,11 +262,129 @@ func loadEnv() {
 	}
 }
 
-func CreateClient(AI_apiKey string) (*gogpt.Client){
+func SetupSequenceWithKey(tgid_ int64,bot *tgbotapi.BotAPI, ai_key string, tg_username string, gpt3_m_string_ string, language_ string, ctx context.Context) {
+	/*
+	msg := tgbotapi.NewMessage(userDatabase[tgid_].tgid, msgTemplates["case0"])	// input key
+	bot.Send(msg)
+	*/
+
+	ai_client := CreateClient(ai_key,tgid_,gpt3_m_string_)	// creating client (but we don't know if it works)
+	//ai_model := 
+
+	if language_ == "eng" {
+		probe, err := TryLanguage(ai_client, gpt3_m_string_, 0,ctx)
+		if err != nil {
+			log.Println("error :", err)
+							msg := tgbotapi.NewMessage(userDatabase[tgid_].tgid,err.Error())
+							bot.Send(msg)
+							msg = tgbotapi.NewMessage(userDatabase[tgid_].tgid,"an error has occured. In order to proceed we need to recreate client and initialize new session")
+							bot.Send(msg)
+							updateDb := userDatabase[tgid_]
+							updateDb.dialog_status = 0
+							userDatabase[tgid_] = updateDb
+		} else {
+		log.Println(probe)
+		msg := tgbotapi.NewMessage(userDatabase[tgid_].tgid,probe)
+		bot.Send(msg)
+
+		userDatabase[tgid_] = user{tgid_, tg_username, 0,ai_key}
+		sessionDatabase[tgid_] = ai_session{ai_key,ai_client,gpt3_m_string_}
+
+		updateDb := userDatabase[tgid_]
+		updateDb.dialog_status = 4
+		userDatabase[tgid_] = updateDb
+		}
+	}
+
+	if language_ == "ru" {
+		probe, err := TryLanguage(ai_client, gpt3_m_string_, 1,ctx)
+		if err != nil {
+			log.Println("error :", err)
+							msg := tgbotapi.NewMessage(userDatabase[tgid_].tgid,err.Error())
+							bot.Send(msg)
+							msg = tgbotapi.NewMessage(userDatabase[tgid_].tgid,"an error has occured. In order to proceed we need to recreate client and initialize new session")
+							bot.Send(msg)
+							updateDb := userDatabase[tgid_]
+							updateDb.dialog_status = 0
+							userDatabase[tgid_] = updateDb
+		} else {
+		log.Println(probe)
+		msg := tgbotapi.NewMessage(userDatabase[tgid_].tgid,probe)
+		bot.Send(msg)
+
+		userDatabase[tgid_] = user{tgid_, tg_username, 0,ai_key}
+		sessionDatabase[tgid_] = ai_session{ai_key,ai_client,gpt3_m_string_}
+
+		updateDb := userDatabase[tgid_]
+		updateDb.dialog_status = 4
+		userDatabase[tgid_] = updateDb
+		
+		}
+	}
+
+}
+
+func TryLanguage(client_ *gogpt.Client, model string, language int, ctx context.Context) (string, error){
+	var language_promt string
+	if language == 0 {
+		language_promt = "Hi, Do you speak english?"
+	}
+	if language == 1 {
+		language_promt = "Привет, ты говоришь по русски?"
+	}
+	log.Println(language_promt)
+	req := CreateComplexRequest(language_promt, model)
+	log.Println(req)
+	resp, err := client_.CreateCompletion(ctx,req)
+	if err != nil {
+		return "nil",err
+	} else {
+		//return resp,nil
+		answer := resp.Choices[0].Text
+		return answer,err
+	}
+}
+
+func StartDialogSequence(promt string, tgid int64, ctx context.Context, bot tgbotapi.BotAPI) {
+	
+	fmt.Println(promt)
+	gpt_model := sessionDatabase[tgid].gpt_model
+	log.Println(gpt_model)
+
+
+
+	req := CreateComplexRequest(promt,gpt_model)
+	c := sessionDatabase[tgid].gpt_client
+	resp, err := c.CreateCompletion(ctx, req)
+	if err != nil {
+		//return
+		log.Println("error :", err)
+		msg := tgbotapi.NewMessage(userDatabase[tgid].tgid,err.Error())
+		bot.Send(msg)
+		msg = tgbotapi.NewMessage(userDatabase[tgid].tgid,"an error has occured. In order to proceed we need to recreate client and initialize new session")
+		bot.Send(msg)
+		updateDb := userDatabase[tgid]
+		updateDb.dialog_status = 0
+		userDatabase[tgid] = updateDb
+
+	} else {
+	fmt.Println(resp.Choices[0].Text)
+	resp_text := resp.Choices[0].Text
+	msg := tgbotapi.NewMessage(userDatabase[tgid].tgid,resp_text)
+	bot.Send(msg)
+	updateDb := userDatabase[tgid]
+	updateDb.dialog_status = 4
+	userDatabase[tgid] = updateDb
+	}
+	
+}
+
+func CreateClient(AI_apiKey string, tgid int64,gpt3_m_string_ string) (*gogpt.Client){
 	client := gogpt.NewClient(AI_apiKey)
 	log.Println(client.ListEngines)
 	log.Println(client.ListModels)
 	log.Println(client.Answers)
+	sessionDatabase[tgid] = ai_session{AI_apiKey,client,gpt3_m_string_}
 	return client
 }
 
