@@ -75,13 +75,14 @@ func main() {
 	ctx := context.Background()
 	//pk := myenv["PK"] // load private key from env
 
-	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT"
+	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT. This is open beta, so I'm sustaining it at my laptop, so bot will be restarted oftenly"
 	msgTemplates["case0"] = "Input your openAI API key. It can be created at https://platform.openai.com/account/api-keys"
 	msgTemplates["await"] = "Awaiting"
 	msgTemplates["case1"] = "Choose model to use. GPT3 is for text-based tasks, Codex for codegeneration."
+	msgTemplates["codex_help"] = "``` # describe your task in comments like this or put your lines of code you need to autocomplete ```"
 
 
-
+ 
 	bot, err := tgbotapi.NewBotAPI(string(tgApiKey))
 	if err != nil {
 		log.Panic(err)
@@ -142,9 +143,11 @@ func main() {
 						//tg_username := update.Message.Chat.UserName
 						//ai_client := CreateClient(ai_key)
 						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0,ai_key}
-						//user := userDatabase[update.Message.From.ID]
-						updateDb.gpt_key = ai_key
-						//sessionDatabase[update.Message.From.ID] = ai_session{ai_key,ai_client,gpt3_m_string}
+						// I can't validate key at this stage. The only way to validate key is to send test sequence (see case 3)
+						// Since this part is oftenly get an uncaught exeption, we debug what user input as key. It's bad, I know, but until we got key validation we need this part.
+						log.Println("key promt: ", ai_key)	
+						updateDb.gpt_key = ai_key	// store key in memory
+						
 						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
 						msg.ReplyMarkup = chooseModelKeyboard
 						bot.Send(msg)
@@ -189,11 +192,14 @@ func main() {
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
 							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
 							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself")
-							msg.ReplyMarkup = languageKeyboard
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["codex_help"])
+							msg.ParseMode = "MARKDOWN"
 							bot.Send(msg)
+							//msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself")
+							//msg.ReplyMarkup = languageKeyboard
+							//bot.Send(msg)
 
-							updateDb.dialog_status = 3
+							updateDb.dialog_status = 4
 							userDatabase[update.Message.From.ID] = updateDb
 						} 
 						if update.Message.Text != "GPT3" && update.Message.Text != "Codex" {
