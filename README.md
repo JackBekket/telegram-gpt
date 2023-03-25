@@ -5,6 +5,7 @@ Now supports chatGPT 3.5 and Codex models for code-generation
 
 https://t.me/Ada_chatgpt3_bot
 
+I use github.com/sashabaranov/go-openai for interaction with openAI
 
 
 Requires your openAI api key
