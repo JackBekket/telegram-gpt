@@ -171,7 +171,7 @@ func main() {
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model :" + session_model)
 							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
 							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself.")
+							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
 							msg.ReplyMarkup = languageKeyboard
 							bot.Send(msg)
 
@@ -453,7 +453,7 @@ func CreateSimpleTextRequest(input string) (gogpt.CompletionRequest){
 func CreateSimpleChatRequest(input string) (gogpt.ChatCompletionRequest) {
 	req := gogpt.ChatCompletionRequest{
 		Model:     gogpt.GPT3Dot5Turbo,
-		MaxTokens: 2048,
+		MaxTokens: 3000,
 		Messages: []gogpt.ChatCompletionMessage{
 			{
 				Role:    gogpt.ChatMessageRoleUser,
@@ -481,7 +481,7 @@ func CreateComplexRequest (input string, model_name string) (gogpt.CompletionReq
 func CreateComplexChatRequest (input string, model_name string) (gogpt.ChatCompletionRequest) {
 	req := gogpt.ChatCompletionRequest{
 		Model:     model_name,
-		MaxTokens: 2048,
+		MaxTokens: 3000,
 		Messages: []gogpt.ChatCompletionMessage{
 			{
 				Role:    gogpt.ChatMessageRoleUser,
@@ -497,7 +497,7 @@ func CreateComplexChatRequest (input string, model_name string) (gogpt.ChatCompl
 func CreateCodexRequest (input string) (gogpt.CompletionRequest) {
 	req := gogpt.CompletionRequest{
 		Model: gogpt.CodexCodeDavinci002,
-		MaxTokens: 2048,
+		MaxTokens: 6000,
 		Prompt: input,
 		Echo: true,
 	}
