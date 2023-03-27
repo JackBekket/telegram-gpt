@@ -161,6 +161,7 @@ func main() {
 							log.Println(update.Message.Text)
 							//gpt3_m_string := gogpt.GPT3TextDavinci003
 							model_name := gogpt.GPT3Dot5Turbo	// gpt-3.5
+							//m_name := gogpt.GPT4
 							
 							log.Println(model_name)
 							ai_client := sessionDatabase[update.Message.From.ID].gpt_client
