@@ -25,7 +25,7 @@ var languageKeyboard = tgbotapi.NewReplyKeyboard(
 var chooseModelKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("GPT-3.5"),
-		tgbotapi.NewKeyboardButton("GPT-4"),
+		//tgbotapi.NewKeyboardButton("GPT-4"),
 		tgbotapi.NewKeyboardButton("Codex")),
 )
 
@@ -197,28 +197,30 @@ func main() {
 							updateDb.dialog_status = 4
 							userDatabase[update.Message.From.ID] = updateDb
 						}
-						if update.Message.Text == "GPT-4" {
-							log.Printf("buttom: %v\n", update.Message.Text)
-							model_name := gogpt.GPT4 // gpt-4
-							log.Printf("modelName: %v\n", model_name)
+						/*
+							if update.Message.Text == "GPT-4" {
+								log.Printf("buttom: %v\n", update.Message.Text)
+								model_name := gogpt.GPT4 // gpt-4
+								log.Printf("modelName: %v\n", model_name)
 
-							ai_client := sessionDatabase[update.Message.From.ID].gpt_client
-							ai_key := sessionDatabase[update.Message.From.ID].gpt_key
-							sessionDatabase[update.Message.From.ID] = ai_session{ai_key, ai_client, model_name}
+								ai_client := sessionDatabase[update.Message.From.ID].gpt_client
+								ai_key := sessionDatabase[update.Message.From.ID].gpt_key
+								sessionDatabase[update.Message.From.ID] = ai_session{ai_key, ai_client, model_name}
 
-							session_model := sessionDatabase[update.Message.From.ID].gpt_model
-							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model: "+session_model)
-							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
-							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
-							msg.ReplyMarkup = languageKeyboard
-							bot.Send(msg)
+								session_model := sessionDatabase[update.Message.From.ID].gpt_model
+								msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "your session model: "+session_model)
+								msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
+								bot.Send(msg)
+								msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
+								msg.ReplyMarkup = languageKeyboard
+								bot.Send(msg)
 
-							updateDb.dialog_status = 3
-							userDatabase[update.Message.From.ID] = updateDb
-						}
-						if update.Message.Text != "GPT-3.5" && update.Message.Text != "Codex" && update.Message.Text != "GPT-4" {
-							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "type GPT-3.5, GPT-4 or Codex")
+								updateDb.dialog_status = 3
+								userDatabase[update.Message.From.ID] = updateDb
+							}
+						*/
+						if update.Message.Text != "GPT-3.5" && update.Message.Text != "Codex" {
+							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "type GPT-3.5 or Codex")
 							log.Println(update.Message.Text)
 							bot.Send(msg)
 							updateDb.dialog_status = 2
