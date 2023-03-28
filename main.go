@@ -219,7 +219,8 @@ func main() {
 								userDatabase[update.Message.From.ID] = updateDb
 							}
 						*/
-						if update.Message.Text != "GPT-3.5" && update.Message.Text != "Codex" {
+						// Can't use commands until connected to gpt chat
+						if update.Message.Text != "GPT-3.5" && update.Message.Text != "Codex" && update.Message.Command() != "" {
 							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "type GPT-3.5 or Codex")
 							log.Println(update.Message.Text)
 							bot.Send(msg)
@@ -253,13 +254,26 @@ func main() {
 					}
 
 				case 4:
-					//	if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-					promt := update.Message.Text
-					fmt.Println(promt)
-					gpt_model := sessionDatabase[update.Message.From.ID].gpt_model
-					log.Println(gpt_model)
 
-					go StartDialogSequence(promt, update.Message.From.ID, ctx, *bot)
+					if update.Message.Command() == "image" {
+
+						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "Image link generation...")
+						bot.Send(msg)
+
+						promt := update.Message.CommandArguments()
+						log.Printf("Command /image arg: %s\n", promt)
+
+						go StartImageSequence(update.Message.From.ID, promt, ctx, bot, &update)
+
+					} else {
+
+						promt := update.Message.Text
+						fmt.Println(promt)
+						gpt_model := sessionDatabase[update.Message.From.ID].gpt_model
+						log.Println(gpt_model)
+
+						go StartDialogSequence(promt, update.Message.From.ID, ctx, *bot)
+					}
 
 				case 5:
 
@@ -374,7 +388,7 @@ func StartDialogSequence(promt string, tgid int64, ctx context.Context, bot tgbo
 
 	fmt.Println(promt)
 	gpt_model := sessionDatabase[tgid].gpt_model
-	log.Println(gpt_model)
+	log.Printf("GPT model: %s\n", gpt_model)
 
 	req := CreateComplexChatRequest(promt, gpt_model)
 	c := sessionDatabase[tgid].gpt_client
@@ -404,7 +418,6 @@ func StartDialogSequence(promt string, tgid int64, ctx context.Context, bot tgbo
 
 func StartCodexSequence(promt string, tgid int64, ctx context.Context, bot tgbotapi.BotAPI) {
 
-	fmt.Println(promt)
 	gpt_model := sessionDatabase[tgid].gpt_model
 	log.Println(gpt_model)
 
@@ -429,6 +442,47 @@ func StartCodexSequence(promt string, tgid int64, ctx context.Context, bot tgbot
 		bot.Send(msg)
 		updateDb := userDatabase[tgid]
 		updateDb.dialog_status = 5
+		userDatabase[tgid] = updateDb
+	}
+
+}
+
+func StartImageSequence(tgid int64, promt string, ctx context.Context, bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
+
+	req := CreateImageRequest(promt)
+	c := sessionDatabase[tgid].gpt_client
+
+	resp, err := c.CreateImage(ctx, req)
+	if err != nil {
+
+		log.Println("error :", err)
+		msg := tgbotapi.NewMessage(userDatabase[tgid].tgid, err.Error())
+		bot.Send(msg)
+		msg = tgbotapi.NewMessage(userDatabase[tgid].tgid, "an error has occured. In order to proceed we need to recreate client and initialize new session")
+		bot.Send(msg)
+		updateDb := userDatabase[tgid]
+		updateDb.dialog_status = 0
+		userDatabase[tgid] = updateDb
+
+	} else {
+
+		respUrl := resp.Data[0].URL
+		log.Printf("url image: %s\n", respUrl)
+
+		msg1 := tgbotapi.NewMessage(userDatabase[tgid].tgid, "Done!")
+		bot.Send(msg1)
+
+		msg := tgbotapi.NewEditMessageText(
+			userDatabase[update.Message.From.ID].tgid,
+			update.Message.MessageID+1,
+			fmt.Sprintf("[Result](%s)", respUrl),
+		)
+
+		msg.ParseMode = "MARKDOWN"
+		bot.Send(msg)
+
+		updateDb := userDatabase[tgid]
+		updateDb.dialog_status = 4
 		userDatabase[tgid] = updateDb
 	}
 
@@ -504,4 +558,13 @@ func CreateCodexRequest(input string) gogpt.CompletionRequest {
 		Echo:      true,
 	}
 	return req
+}
+
+func CreateImageRequest(input string) gogpt.ImageRequest {
+	return gogpt.ImageRequest{
+		Prompt:         input,
+		Size:           gogpt.CreateImageSize1024x1024,
+		ResponseFormat: gogpt.CreateImageResponseFormatURL,
+		N:              1,
+	}
 }
