@@ -156,8 +156,9 @@ func main() {
 							// TODO: Write down user choise
 							log.Println(update.Message.Text)
 							//gpt3_m_string := gogpt.GPT3TextDavinci003
-							model_name := gogpt.GPT3Dot5Turbo // gpt-3.5
 
+							model_name := gogpt.GPT3Dot5Turbo // gpt-3.5
+							
 							log.Println(model_name)
 							ai_client := sessionDatabase[update.Message.From.ID].gpt_client
 							ai_key := sessionDatabase[update.Message.From.ID].gpt_key
