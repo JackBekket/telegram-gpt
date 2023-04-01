@@ -7,8 +7,6 @@ import (
 
 	"os"
 
-	"github.com/joho/godotenv"
-
 	gogpt "github.com/sashabaranov/go-openai"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
@@ -66,9 +64,7 @@ const envLoc = ".env"
 
 func main() {
 
-	loadEnv()
 	ctx := context.Background()
-	//pk := myenv["PK"] // load private key from env
 
 	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT. This is open beta, so I'm sustaining it at my laptop, so bot will be restarted oftenly"
 	msgTemplates["case0"] = "Input your openAI API key. It can be created at https://platform.openai.com/account/api-keys"
@@ -76,7 +72,7 @@ func main() {
 	msgTemplates["case1"] = "Choose model to use. GPT3 is for text-based tasks, Codex for codegeneration."
 	msgTemplates["codex_help"] = "``` # describe your task in comments like this or put your lines of code you need to autocomplete ```"
 
-	bot, err := tgbotapi.NewBotAPI(string(tgApiKey))
+	bot, err := tgbotapi.NewBotAPI(string(tgApiKey)[:len(string(tgApiKey))-1])
 	if err != nil {
 		log.Panic(err)
 	}
@@ -293,14 +289,6 @@ func main() {
 	}
 
 } // end of main func
-
-// load enviroment variables from .env file
-func loadEnv() {
-	var err error
-	if myenv, err = godotenv.Read(envLoc); err != nil {
-		log.Printf("could not load env from %s: %v", envLoc, err)
-	}
-}
 
 func SetupSequenceWithKey(tgid_ int64, bot *tgbotapi.BotAPI, ai_key string, tg_username string, model_name string, language_ string, ctx context.Context) {
 	/*
