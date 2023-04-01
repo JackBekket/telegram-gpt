@@ -94,6 +94,9 @@ func main() {
 				msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["hello"])
 				msg.ReplyMarkup = mainKeyboard
 				bot.Send(msg)
+				fmt.Println("tgid: ",update.Message.From.ID)
+				fmt.Println("username: ",update.Message.From.String)
+				fmt.Println("username: ",update.Message.From.UserName)
 				// check for registration
 				//	registred := IsAlreadyRegistred(session, update.Message.From.ID)
 				/*
@@ -397,6 +400,7 @@ func StartDialogSequence(promt string, tgid int64, ctx context.Context, bot tgbo
 		fmt.Println(resp.Choices[0].Message.Content)
 		resp_text := resp.Choices[0].Message.Content
 		msg := tgbotapi.NewMessage(userDatabase[tgid].tgid, resp_text)
+		msg.ParseMode = "MARKDOWN"
 		bot.Send(msg)
 		updateDb := userDatabase[tgid]
 		updateDb.dialog_status = 4
@@ -428,6 +432,7 @@ func StartCodexSequence(promt string, tgid int64, ctx context.Context, bot tgbot
 		fmt.Println(resp.Choices[0].Text)
 		resp_text := resp.Choices[0].Text
 		msg := tgbotapi.NewMessage(userDatabase[tgid].tgid, resp_text)
+		msg.ParseMode = "MARKDOWN"
 		bot.Send(msg)
 		updateDb := userDatabase[tgid]
 		updateDb.dialog_status = 5
