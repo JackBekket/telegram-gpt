@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	"os"
 
+	"github.com/joho/godotenv"
 	gogpt "github.com/sashabaranov/go-openai"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
@@ -64,6 +66,32 @@ const envLoc = ".env"
 
 func main() {
 
+	loadEnv()
+
+	// constants from env
+	ak := myenv["ADMIN_KEY"] // 
+	a_id_s := myenv["ADMIN_ID"]
+	a_id, err := strconv.ParseInt(a_id_s,0,64)
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
+
+	minty_k := myenv["MINTY_KEY"]
+	minty_id_s := myenv["MINTY_ID"]
+	minty_id, err := strconv.ParseInt(minty_id_s,0,64)
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
+
+	ox_key := myenv["OK_KEY"]
+	ox_id_s := myenv["OK_ID"]
+	ox_id,err := strconv.ParseInt(ox_id_s,0,64)
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
+
+	tg_key_env := myenv["TG_KEY"]
+
 	ctx := context.Background()
 
 	msgTemplates["hello"] = "Hey, this bot is OpenAI chatGPT. This is open beta, so I'm sustaining it at my laptop, so bot will be restarted oftenly"
@@ -72,10 +100,18 @@ func main() {
 	msgTemplates["case1"] = "Choose model to use. GPT3 is for text-based tasks, Codex for codegeneration."
 	msgTemplates["codex_help"] = "``` # describe your task in comments like this or put your lines of code you need to autocomplete ```"
 
+	/*
 	bot, err := tgbotapi.NewBotAPI(string(tgApiKey)[:len(string(tgApiKey))-1])
 	if err != nil {
 		log.Panic(err)
 	}
+	*/
+
+	bot, err := tgbotapi.NewBotAPI(tg_key_env)
+	if err != nil {
+		log.Panic(err)
+	}
+
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -90,13 +126,58 @@ func main() {
 		if update.Message != nil {
 			if _, ok := userDatabase[update.Message.From.ID]; !ok {
 
+				fmt.Println("tgid: ",update.Message.From.ID)
+				fmt.Println("username: ",update.Message.From.String)
+				fmt.Println("username: ",update.Message.From.UserName)
+				user_id := update.Message.From.ID
+				admin := false
+
+				// if admin then get key from env
+				if user_id == minty_id {
+					ai_key := minty_k
+					userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 2, ai_key}
+					fmt.Println("minty authorized")
+					admin = true
+					msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "authorized")
+					bot.Send(msg)
+					msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
+					msg.ReplyMarkup = chooseModelKeyboard
+					bot.Send(msg)
+				}
+
+				if user_id == a_id {
+					ai_key := ak
+					userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 2, ai_key}
+					fmt.Println("a authorized")
+					admin = true
+					msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "authorized")
+					bot.Send(msg)
+					msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
+					msg.ReplyMarkup = chooseModelKeyboard
+					bot.Send(msg)
+					
+				}
+				if user_id == ox_id {
+					ai_key := ox_key
+					userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 2, ai_key}
+					fmt.Println("ox authorized")
+					admin = true
+					msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, "authorized")
+					bot.Send(msg)
+					msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["case1"])
+					msg.ReplyMarkup = chooseModelKeyboard
+					bot.Send(msg)
+
+				
+				}	else if admin == false {
+
+
+
 				userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 0, ""}
 				msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].tgid, msgTemplates["hello"])
 				msg.ReplyMarkup = mainKeyboard
 				bot.Send(msg)
-				fmt.Println("tgid: ",update.Message.From.ID)
-				fmt.Println("username: ",update.Message.From.String)
-				fmt.Println("username: ",update.Message.From.UserName)
+
 				// check for registration
 				//	registred := IsAlreadyRegistred(session, update.Message.From.ID)
 				/*
@@ -104,6 +185,7 @@ func main() {
 						userDatabase[update.Message.From.ID] = user{update.Message.Chat.ID, update.Message.Chat.UserName, 1}
 					}
 				*/
+						}
 
 			} else {
 
@@ -560,5 +642,13 @@ func CreateImageRequest(input string) gogpt.ImageRequest {
 		Size:           gogpt.CreateImageSize1024x1024,
 		ResponseFormat: gogpt.CreateImageResponseFormatURL,
 		N:              1,
+	}
+}
+
+// load enviroment variables from .env file
+func loadEnv() {
+	var err error
+	if myenv, err = godotenv.Read(envLoc); err != nil {
+		log.Printf("could not load env from %s: %v", envLoc, err)
 	}
 }
