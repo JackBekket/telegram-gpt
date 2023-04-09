@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	db "github.com/JackBekket/telegram-gpt/internal/database"
+	aibot "github.com/JackBekket/telegram-gpt/internal/openaibot"
 	"github.com/joho/godotenv"
 	gogpt "github.com/sashabaranov/go-openai"
 
@@ -85,7 +86,7 @@ func main() {
 
 	bot, err := tgbotapi.NewBotAPI(tg_key_env)
 	if err != nil {
-		log.Fatalf("tg token: %v", err)
+		log.Fatalf("tg token: %v\n", err)
 	}
 
 	// init database
@@ -296,7 +297,7 @@ func main() {
 						ai_key := userDatabase[update.Message.From.ID].Gpt_key
 						un := userDatabase[update.Message.From.ID].Username
 						ai_model := sessionDatabase[update.Message.From.ID].Gpt_model
-						go SetupSequenceWithKey(update.Message.From.ID, bot, ai_key, un, ai_model, update.Message.Text, ctx)
+						go aibot.SetupSequenceWithKey(update.Message.From.ID, bot, ai_key, un, ai_model, update.Message.Text, ctx)
 
 					}
 
@@ -307,7 +308,7 @@ func main() {
 						ai_key := userDatabase[update.Message.From.ID].Gpt_key
 						un := userDatabase[update.Message.From.ID].Username
 						ai_model := sessionDatabase[update.Message.From.ID].Gpt_model
-						go SetupSequenceWithKey(update.Message.From.ID, bot, ai_key, un, ai_model, update.Message.Text, ctx)
+						go aibot.SetupSequenceWithKey(update.Message.From.ID, bot, ai_key, un, ai_model, update.Message.Text, ctx)
 
 					}
 
@@ -321,7 +322,7 @@ func main() {
 						promt := update.Message.CommandArguments()
 						log.Printf("Command /image arg: %s\n", promt)
 
-						go StartImageSequence(update.Message.From.ID, promt, ctx, bot, &update)
+						go aibot.StartImageSequence(update.Message.From.ID, promt, ctx, bot, &update)
 
 					} else {
 
@@ -330,7 +331,7 @@ func main() {
 						gpt_model := sessionDatabase[update.Message.From.ID].Gpt_model
 						log.Println(gpt_model)
 
-						go StartDialogSequence(promt, update.Message.From.ID, ctx, *bot)
+						go aibot.StartDialogSequence(promt, update.Message.From.ID, ctx, bot)
 					}
 
 				case 5:
@@ -340,7 +341,7 @@ func main() {
 					gpt_model := sessionDatabase[update.Message.From.ID].Gpt_model
 					log.Println(gpt_model)
 
-					go StartCodexSequence(promt, update.Message.From.ID, ctx, *bot)
+					go aibot.StartCodexSequence(promt, update.Message.From.ID, ctx, bot)
 					//updateDb.Dialog_status = 0
 					//userDatabase[update.Message.From.ID] = updateDb
 
@@ -350,314 +351,6 @@ func main() {
 	}
 
 } // end of main func
-
-func SetupSequenceWithKey(ID_ int64, bot *tgbotapi.BotAPI, ai_key string, tg_username string, model_name string, language_ string, ctx context.Context) {
-	/*
-		msg := tgbotapi.NewMessage(userDatabase[ID_].ID, msgTemplates["case0"])	// input key
-		bot.Send(msg)
-	*/
-
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
-
-	ai_client := CreateClient(ai_key, ID_, model_name) // creating client (but we don't know if it works)
-	//ai_model :=
-
-	if language_ == "eng" {
-		probe, err := TryLanguage(ai_client, model_name, 0, ctx)
-		if err != nil {
-			log.Println("error :", err)
-			msg := tgbotapi.NewMessage(userDatabase[ID_].ID, err.Error())
-			bot.Send(msg)
-			msg = tgbotapi.NewMessage(userDatabase[ID_].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
-			bot.Send(msg)
-			updateDb := userDatabase[ID_]
-			updateDb.Dialog_status = 0
-			userDatabase[ID_] = updateDb
-		} else {
-			log.Println(probe)
-			msg := tgbotapi.NewMessage(userDatabase[ID_].ID, probe)
-			bot.Send(msg)
-
-			userDatabase[ID_] = db.User{
-				ID:            ID_,
-				Username:      tg_username,
-				Dialog_status: 0,
-				Gpt_key:       ai_key}
-
-			sessionDatabase[ID_] = db.AiSession{
-				Gpt_key:    ai_key,
-				Gpt_client: ai_client,
-				Gpt_model:  model_name,
-			}
-
-			updateDb := userDatabase[ID_]
-			updateDb.Dialog_status = 4
-			userDatabase[ID_] = updateDb
-		}
-	}
-
-	if language_ == "ru" {
-		probe, err := TryLanguage(ai_client, model_name, 1, ctx)
-		if err != nil {
-			log.Println("error :", err)
-			msg := tgbotapi.NewMessage(userDatabase[ID_].ID, err.Error())
-			bot.Send(msg)
-			msg = tgbotapi.NewMessage(userDatabase[ID_].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
-			bot.Send(msg)
-			updateDb := userDatabase[ID_]
-			updateDb.Dialog_status = 0
-			userDatabase[ID_] = updateDb
-		} else {
-			log.Println(probe)
-			msg := tgbotapi.NewMessage(userDatabase[ID_].ID, probe)
-			bot.Send(msg)
-
-			userDatabase[ID_] = db.User{
-				ID:            ID_,
-				Username:      tg_username,
-				Dialog_status: 0,
-				Gpt_key:       ai_key}
-
-			sessionDatabase[ID_] = db.AiSession{
-				Gpt_key:    ai_key,
-				Gpt_client: ai_client,
-				Gpt_model:  model_name,
-			}
-
-			updateDb := userDatabase[ID_]
-			updateDb.Dialog_status = 4
-			userDatabase[ID_] = updateDb
-
-		}
-	}
-
-}
-
-func TryLanguage(client_ *gogpt.Client, model string, language int, ctx context.Context) (string, error) {
-	var language_promt string
-	if language == 0 {
-		language_promt = "Hi, Do you speak english?"
-	}
-	if language == 1 {
-		language_promt = "Привет, ты говоришь по русски?"
-	}
-	log.Println(language_promt)
-	req := CreateComplexChatRequest(language_promt, model)
-	log.Println(req)
-	resp, err := client_.CreateChatCompletion(ctx, req)
-	if err != nil {
-		return "nil", err
-	} else {
-		//return resp,nil
-		answer := resp.Choices[0].Message.Content
-		return answer, err
-	}
-}
-
-func StartDialogSequence(promt string, ID int64, ctx context.Context, bot tgbotapi.BotAPI) {
-
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
-
-	fmt.Println(promt)
-	gpt_model := sessionDatabase[ID].Gpt_model
-	log.Printf("GPT model: %s\n", gpt_model)
-
-	req := CreateComplexChatRequest(promt, gpt_model)
-	c := sessionDatabase[ID].Gpt_client
-	resp, err := c.CreateChatCompletion(ctx, req)
-	if err != nil {
-		//return
-		log.Println("error :", err)
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, err.Error())
-		bot.Send(msg)
-		msg = tgbotapi.NewMessage(userDatabase[ID].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
-		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 0
-		userDatabase[ID] = updateDb
-
-	} else {
-		fmt.Println(resp.Choices[0].Message.Content)
-		resp_text := resp.Choices[0].Message.Content
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, resp_text)
-		msg.ParseMode = "MARKDOWN"
-		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 4
-		userDatabase[ID] = updateDb
-	}
-
-}
-
-func StartCodexSequence(promt string, ID int64, ctx context.Context, bot tgbotapi.BotAPI) {
-
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
-
-	gpt_model := sessionDatabase[ID].Gpt_model
-	log.Println(gpt_model)
-
-	req := CreateCodexRequest(promt)
-	c := sessionDatabase[ID].Gpt_client
-	resp, err := c.CreateCompletion(ctx, req)
-	if err != nil {
-		//return
-		log.Println("error :", err)
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, err.Error())
-		bot.Send(msg)
-		msg = tgbotapi.NewMessage(userDatabase[ID].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
-		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 0
-		userDatabase[ID] = updateDb
-
-	} else {
-		fmt.Println(resp.Choices[0].Text)
-		resp_text := resp.Choices[0].Text
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, resp_text)
-		msg.ParseMode = "MARKDOWN"
-		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 5
-		userDatabase[ID] = updateDb
-	}
-
-}
-
-func StartImageSequence(ID int64, promt string, ctx context.Context, bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
-
-	req := CreateImageRequest(promt)
-	c := sessionDatabase[ID].Gpt_client
-
-	resp, err := c.CreateImage(ctx, req)
-	if err != nil {
-
-		log.Println("error :", err)
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, err.Error())
-		bot.Send(msg)
-		msg = tgbotapi.NewMessage(userDatabase[ID].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
-		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 0
-		userDatabase[ID] = updateDb
-
-	} else {
-
-		respUrl := resp.Data[0].URL
-		log.Printf("url image: %s\n", respUrl)
-
-		msg1 := tgbotapi.NewMessage(userDatabase[ID].ID, "Done!")
-		bot.Send(msg1)
-
-		msg := tgbotapi.NewEditMessageText(
-			userDatabase[update.Message.From.ID].ID,
-			update.Message.MessageID+1,
-			fmt.Sprintf("[Result](%s)", respUrl),
-		)
-
-		msg.ParseMode = "MARKDOWN"
-		bot.Send(msg)
-
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 4
-		userDatabase[ID] = updateDb
-	}
-
-}
-
-func CreateClient(AI_apiKey string, ID int64, model_name string) *gogpt.Client {
-
-	sessionDatabase := db.AiSessionMap
-
-	client := gogpt.NewClient(AI_apiKey)
-
-	sessionDatabase[ID] = db.AiSession{
-		Gpt_key:    AI_apiKey,
-		Gpt_client: client,
-		Gpt_model:  model_name,
-	}
-
-	return client
-}
-
-/*
-// used for GPT-3
-func CreateSimpleTextRequest(input string) (gogpt.CompletionRequest){
-	req := gogpt.CompletionRequest{
-		Model:     gogpt.GPT3Dot5Turbo,
-		MaxTokens: 2048,
-		Prompt:    input,
-		Echo: true,
-	}
-	return req
-}
-*/
-
-// GPT-3.5
-func CreateSimpleChatRequest(input string) gogpt.ChatCompletionRequest {
-	req := gogpt.ChatCompletionRequest{
-		Model:     gogpt.GPT3Dot5Turbo,
-		MaxTokens: 3000,
-		Messages: []gogpt.ChatCompletionMessage{
-			{
-				Role:    gogpt.ChatMessageRoleUser,
-				Content: input,
-			},
-		}}
-	return req
-}
-
-/*
-// model should be gogpt.GPT3TextDavinci003 or gogpt.CodexCodeDavinci002
-// WARN -- deprecated!
-func CreateComplexRequest (input string, model_name string) (gogpt.CompletionRequest) {
-	req := gogpt.CompletionRequest{
-		Model: model_name,
-		MaxTokens: 2048,
-		Prompt: input,
-		Echo: true,
-	}
-	return req
-}
-*/
-
-func CreateComplexChatRequest(input string, model_name string) gogpt.ChatCompletionRequest {
-	req := gogpt.ChatCompletionRequest{
-		Model:     model_name,
-		MaxTokens: 3000,
-		Messages: []gogpt.ChatCompletionMessage{
-			{
-				Role:    gogpt.ChatMessageRoleUser,
-				Content: input,
-			},
-		}}
-	return req
-}
-
-// for code generation
-func CreateCodexRequest(input string) gogpt.CompletionRequest {
-	req := gogpt.CompletionRequest{
-		Model:     gogpt.CodexCodeDavinci002,
-		MaxTokens: 6000,
-		Prompt:    input,
-		Echo:      true,
-	}
-	return req
-}
-
-func CreateImageRequest(input string) gogpt.ImageRequest {
-	return gogpt.ImageRequest{
-		Prompt:         input,
-		Size:           gogpt.CreateImageSize1024x1024,
-		ResponseFormat: gogpt.CreateImageResponseFormatURL,
-		N:              1,
-	}
-}
 
 // load enviroment variables from .env file
 func loadEnv() {
