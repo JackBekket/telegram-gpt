@@ -2,18 +2,21 @@ package openaibot
 
 import gogpt "github.com/sashabaranov/go-openai"
 
+/*
 // GPT-3.5
-func createSimpleChatRequest(input string) gogpt.ChatCompletionRequest {
-	return gogpt.ChatCompletionRequest{
-		Model:     gogpt.GPT3Dot5Turbo,
-		MaxTokens: 3000,
-		Messages: []gogpt.ChatCompletionMessage{
-			{
-				Role:    gogpt.ChatMessageRoleUser,
-				Content: input,
-			},
-		}}
-}
+
+	func createSimpleChatRequest(input string) gogpt.ChatCompletionRequest {
+		return gogpt.ChatCompletionRequest{
+			Model:     gogpt.GPT3Dot5Turbo,
+			MaxTokens: 3000,
+			Messages: []gogpt.ChatCompletionMessage{
+				{
+					Role:    gogpt.ChatMessageRoleUser,
+					Content: input,
+				},
+			}}
+	}
+*/
 
 func createComplexChatRequest(input string, model_name string) gogpt.ChatCompletionRequest {
 	return gogpt.ChatCompletionRequest{

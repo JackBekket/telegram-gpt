@@ -6,6 +6,7 @@ type User struct {
 	Username      string
 	Dialog_status int64
 	Gpt_key       string
+	Admin         bool
 	//gpt_client gpt3.Client
 }
 
