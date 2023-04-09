@@ -48,14 +48,14 @@ func main() {
 
 	tg_key_env := myenv["TG_KEY"]
 
-	ctx := context.Background()
-
 	bot, err := tgbotapi.NewBotAPI(tg_key_env)
 	if err != nil {
 		log.Fatalf("tg token: %v\n", err)
 	}
 
-	// init database
+	ctx := context.Background()
+
+	// init database and commander
 	userDatabase := db.UserMap
 	sessionDatabase := db.AiSessionMap
 	comm := command.NewCommander(bot, userDatabase, sessionDatabase)
@@ -75,27 +75,20 @@ func main() {
 		}
 		if _, ok := userDatabase[update.Message.From.ID]; !ok {
 
-			fmt.Println("ID: ", update.Message.From.ID)
-			fmt.Println("username: ", update.Message.From.FirstName)
-			fmt.Println("username: ", update.Message.From.UserName)
-			user_id := update.Message.From.ID
-			admin := false
-
+			fmt.Printf("ID: %v\nusername: %s\n",
+				update.Message.From.ID,
+				update.Message.From.UserName,
+			)
+			userID := update.Message.From.ID
 			// if admin then get key from env
-			if user_id == minty_id {
-				admin = comm.AddAdminToMap(minty_k, update.Message)
-			}
-
-			if user_id == a_id {
-				admin = comm.AddAdminToMap(ak, update.Message)
-
-			}
-			if user_id == ox_id {
-				admin = comm.AddAdminToMap(ox_key, update.Message)
-
-			}
-			if !admin {
-
+			switch userID {
+			case minty_id:
+				comm.AddAdminToMap(minty_k, update.Message)
+			case a_id:
+				comm.AddAdminToMap(ak, update.Message)
+			case ox_id:
+				comm.AddAdminToMap(ox_key, update.Message)
+			default:
 				comm.AddNewUserToMap(update.Message)
 			}
 

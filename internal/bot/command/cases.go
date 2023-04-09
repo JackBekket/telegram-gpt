@@ -81,7 +81,7 @@ func (c *Commander) ModelGPT3DOT5(updateMessage *tgbotapi.Message, updateDb *dat
 	c.bot.Send(msg)
 
 	msg = tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
-	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("eng"),
 			tgbotapi.NewKeyboardButton("ru")),
@@ -145,7 +145,7 @@ func (c *Commander) ModelGPT4(updateMessage *tgbotapi.Message, updateDb *databas
 	c.bot.Send(msg)
 
 	msg = tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
-	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("eng"),
 			tgbotapi.NewKeyboardButton("ru")),
