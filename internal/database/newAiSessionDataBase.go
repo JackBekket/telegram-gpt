@@ -9,8 +9,3 @@ type AiSession struct {
 }
 
 var AiSessionMap = make(map[int64]AiSession)
-
-// func NewAiSessionDataBase() *map[int64]*AiSession {
-// 	db := make(map[int64]*AiSession)
-// 	return &db
-// }

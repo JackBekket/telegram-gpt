@@ -10,8 +10,3 @@ type User struct {
 }
 
 var UserMap = make(map[int64]User)
-
-// func NewUserDataBase() *map[int64]*User {
-// 	db := make(map[int64]*User)
-// 	return &db
-// }
