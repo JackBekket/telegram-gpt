@@ -6,9 +6,9 @@ import (
 )
 
 type Commander struct {
-	bot          *tgbotapi.BotAPI
-	userDb       map[int64]database.User
-	aiSesseionDb map[int64]database.AiSession
+	bot         *tgbotapi.BotAPI
+	userDb      map[int64]database.User
+	aiSessionDb map[int64]database.AiSession
 }
 
 func NewCommander(
@@ -17,8 +17,8 @@ func NewCommander(
 	sessionDB map[int64]database.AiSession,
 ) *Commander {
 	return &Commander{
-		bot:          bot,
-		userDb:       userDb,
-		aiSesseionDb: sessionDB,
+		bot:         bot,
+		userDb:      userDb,
+		aiSessionDb: sessionDB,
 	}
 }

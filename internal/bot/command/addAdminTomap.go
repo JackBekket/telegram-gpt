@@ -26,7 +26,7 @@ func (c *Commander) AddAdminToMap(
 	c.bot.Send(msg)
 
 	msg = tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, msgTemplates["case1"])
-	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("GPT-3.5"),
 			//tgbotapi.NewKeyboardButton("GPT-4"),

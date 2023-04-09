@@ -10,7 +10,6 @@ import (
 	db "github.com/JackBekket/telegram-gpt/internal/database"
 	aibot "github.com/JackBekket/telegram-gpt/internal/openaibot"
 	"github.com/joho/godotenv"
-	gogpt "github.com/sashabaranov/go-openai"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
 
@@ -141,121 +140,30 @@ func main() {
 			//first check for user status, (for a new user status 0 is set automatically), then user reply for the first bot message is logged to a database as name AND user status is updated
 			case 0:
 				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-
-					msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, msgTemplates["case0"])
-					msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
-					bot.Send(msg)
-
-					ID := userDatabase[update.Message.From.ID].ID
-					user_name := userDatabase[update.Message.From.ID].Username
-					fmt.Println(ID)
-					fmt.Println(user_name)
-
-					updateDb.Dialog_status = 1
-					userDatabase[update.Message.From.ID] = updateDb
-
+					// update Dialog_status = 1
+					comm.InputYourAPIKey(update.Message, &updateDb)
 				}
-				//fallthrough // МЫ ЛЕД ПОД НОГАМИ МАЙОРА!
-				//
 			case 1:
 				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-					//gpt3_m_string := gogpt.GPT3TextDavinci003
-					ai_key := update.Message.Text
-					//tg_username := update.Message.Chat.UserName
-					//ai_client := CreateClient(ai_key)
-					userDatabase[update.Message.From.ID] = db.User{update.Message.Chat.ID, update.Message.Chat.UserName, 0, ai_key, false}
-					// I can't validate key at this stage. The only way to validate key is to send test sequence (see case 3)
-					// Since this part is oftenly get an uncaught exeption, we debug what user input as key. It's bad, I know, but until we got key validation we need this part.
-					log.Println("key promt: ", ai_key)
-					updateDb.Gpt_key = ai_key // store key in memory
-
-					msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, msgTemplates["case1"])
-					msg.ReplyMarkup = chooseModelKeyboard
-					bot.Send(msg)
-					updateDb.Dialog_status = 2
-					userDatabase[update.Message.From.ID] = updateDb
-
+					// update Dialog_status = 2
+					comm.ChooseModel(update.Message, &updateDb)
 				}
-				//fallthrough
 			case 2:
 				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-
-					if update.Message.Text == "GPT-3.5" {
-						// TODO: Write down user choise
-						log.Println(update.Message.Text)
-						//gpt3_m_string := gogpt.GPT3TextDavinci003
-
-						model_name := gogpt.GPT3Dot5Turbo // gpt-3.5
-
-						log.Println(model_name)
-						ai_client := sessionDatabase[update.Message.From.ID].Gpt_client
-						ai_key := sessionDatabase[update.Message.From.ID].Gpt_key
-						sessionDatabase[update.Message.From.ID] = db.AiSession{ai_key, ai_client, model_name}
-
-						session_model := sessionDatabase[update.Message.From.ID].Gpt_model
-						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "your session model :"+session_model)
-						msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
-						bot.Send(msg)
-						msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
-						msg.ReplyMarkup = languageKeyboard
-						bot.Send(msg)
-
-						updateDb.Dialog_status = 3
-						userDatabase[update.Message.From.ID] = updateDb
+					switch update.Message.Text {
+					case "GPT-3.5":
+						// update Dialog_status = 3
+						comm.ModelGPT3DOT5(update.Message, &updateDb)
+					case "Codex":
+						// update Dialog_status = 4
+						comm.ModelCodex(update.Message, &updateDb)
+					// case "GPT-4":
+					// 	comm.ModelGPT4(update.Message, &updateDb)
+					default:
+						comm.WrongModel(update.Message, &updateDb)
 					}
-					if update.Message.Text == "Codex" {
-						// Use codex model
-						log.Println(update.Message.Text)
-						gpt3_m_string := gogpt.CodexCodeDavinci002
-						log.Println(gpt3_m_string)
-						ai_client := sessionDatabase[update.Message.From.ID].Gpt_client
-						ai_key := sessionDatabase[update.Message.From.ID].Gpt_key
-						sessionDatabase[update.Message.From.ID] = db.AiSession{ai_key, ai_client, gpt3_m_string}
-
-						session_model := sessionDatabase[update.Message.From.ID].Gpt_model
-						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "your session model :"+session_model)
-						msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
-						bot.Send(msg)
-						msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, msgTemplates["codex_help"])
-						msg.ParseMode = "MARKDOWN"
-						bot.Send(msg)
-						//msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "Choose language. Note that dataset used for training models in languages different from english may be *CENSORED*. This is problem with dataset, not model itself")
-						//msg.ReplyMarkup = languageKeyboard
-						//bot.Send(msg)
-
-						updateDb.Dialog_status = 4
-						userDatabase[update.Message.From.ID] = updateDb
-					}
-					/*
-						if update.Message.Text == "GPT-4" {
-							log.Printf("buttom: %v\n", update.Message.Text)
-							model_name := gogpt.GPT4 // gpt-4
-							log.Printf("modelName: %v\n", model_name)
-
-							ai_client := sessionDatabase[update.Message.From.ID].Gpt_client
-							ai_key := sessionDatabase[update.Message.From.ID].Gpt_key
-							sessionDatabase[update.Message.From.ID] = ai_session{ai_key, ai_client, model_name}
-
-							session_model := sessionDatabase[update.Message.From.ID].Gpt_model
-							msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "your session model: "+session_model)
-							msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(false)
-							bot.Send(msg)
-							msg = tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language")
-							msg.ReplyMarkup = languageKeyboard
-							bot.Send(msg)
-
-							updateDb.Dialog_status = 3
-							userDatabase[update.Message.From.ID] = updateDb
-						}
-					*/
 					// Can't use commands until connected to gpt chat
-					if update.Message.Text != "GPT-3.5" && update.Message.Text != "Codex" && update.Message.Command() != "" {
-						msg := tgbotapi.NewMessage(userDatabase[update.Message.From.ID].ID, "type GPT-3.5 or Codex")
-						log.Println(update.Message.Text)
-						bot.Send(msg)
-						updateDb.Dialog_status = 2
-						userDatabase[update.Message.From.ID] = updateDb
-					}
+					// update.Message.Command() != ""
 				}
 
 			case 3:
