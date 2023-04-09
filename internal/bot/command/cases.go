@@ -183,10 +183,11 @@ func (c *Commander) ConnectingToOpenAiWithLanguage(
 	go openaibot.SetupSequenceWithKey(updateMessage.From.ID, c.bot, aikey, username, aiModel, language, ctx)
 }
 
-// Generates an image with the /image command
+// Generates an image with the /image command.
+//
 // Generates and sends text to the user.
 //
-// update update Dialog_Status = 4, for model GPT-3.5
+// update Dialog_Status = 4, for model GPT-3.5
 func (c *Commander) DialogSequence(
 	updateMessage *tgbotapi.Message,
 	ctx context.Context,
