@@ -10,8 +10,13 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func StartImageSequence(ID int64, promt string, ctx context.Context, bot *tgbotapi.BotAPI, update *tgbotapi.Update) {
-
+func StartImageSequence(
+	ID int64,
+	promt string,
+	ctx context.Context,
+	bot *tgbotapi.BotAPI,
+	updateMessage *tgbotapi.Message,
+) {
 	userDatabase := database.UserMap
 	sessionDatabase := database.AiSessionMap
 
@@ -20,9 +25,7 @@ func StartImageSequence(ID int64, promt string, ctx context.Context, bot *tgbota
 
 	resp, err := c.CreateImage(ctx, req)
 	if err != nil {
-
 		errorMessage(err, bot, ID, userDatabase)
-
 	} else {
 
 		respUrl := resp.Data[0].URL
@@ -32,8 +35,8 @@ func StartImageSequence(ID int64, promt string, ctx context.Context, bot *tgbota
 		bot.Send(msg1)
 
 		msg := tgbotapi.NewEditMessageText(
-			userDatabase[update.Message.From.ID].ID,
-			update.Message.MessageID+1,
+			userDatabase[updateMessage.From.ID].ID,
+			updateMessage.MessageID+1,
 			fmt.Sprintf("[Result](%s)", respUrl),
 		)
 
@@ -44,5 +47,4 @@ func StartImageSequence(ID int64, promt string, ctx context.Context, bot *tgbota
 		updatedatabase.Dialog_status = 4
 		userDatabase[ID] = updatedatabase
 	}
-
 }
