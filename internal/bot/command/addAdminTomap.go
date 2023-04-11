@@ -11,7 +11,7 @@ func (c *Commander) AddAdminToMap(
 	adminKey string,
 	updateMessage *tgbotapi.Message,
 
-) bool {
+) {
 	c.userDb[updateMessage.From.ID] = database.User{
 		ID:            updateMessage.Chat.ID,
 		Username:      updateMessage.Chat.UserName,
@@ -33,5 +33,4 @@ func (c *Commander) AddAdminToMap(
 			tgbotapi.NewKeyboardButton("Codex")),
 	)
 	c.bot.Send(msg)
-	return true
 }
