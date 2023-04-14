@@ -22,7 +22,7 @@ func (c *Commander) AddAdminToMap(
 
 	fmt.Printf("%s authorized\n", updateMessage.Chat.UserName)
 
-	msg := tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, "authorized")
+	msg := tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, "authorized: "+updateMessage.Chat.UserName)
 	c.bot.Send(msg)
 
 	msg = tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, msgTemplates["case1"])
