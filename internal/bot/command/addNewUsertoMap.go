@@ -5,6 +5,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Adds a new user to the database and assigns "Dialog_status" = 0.
 func (c *Commander) AddNewUserToMap(updateMessage *tgbotapi.Message) {
 	c.userDb[updateMessage.From.ID] = database.User{
 		ID:            updateMessage.Chat.ID,
