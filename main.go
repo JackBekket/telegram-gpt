@@ -4,53 +4,30 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/JackBekket/telegram-gpt/internal/bot/command"
+	"github.com/JackBekket/telegram-gpt/internal/bot/env"
 	db "github.com/JackBekket/telegram-gpt/internal/database"
-	"github.com/joho/godotenv"
 
 	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var myenv map[string]string
-
-// file with settings for enviroment
-const envLoc = ".env"
-
 func main() {
-
-	loadEnv()
-
-	// constants from env
-	ak := myenv["ADMIN_KEY"] //
-	a_id_s := myenv["ADMIN_ID"]
-	a_id, err := strconv.ParseInt(a_id_s, 0, 64)
+	err := env.Load()
 	if err != nil {
-		fmt.Println("error: ", err)
+		log.Panicf("could not load env from: %v", err)
 	}
 
-	minty_k := myenv["MINTY_KEY"]
-	minty_id_s := myenv["MINTY_ID"]
-	minty_id, err := strconv.ParseInt(minty_id_s, 0, 64)
+	token, err := env.LoadTGToken()
 	if err != nil {
-		fmt.Println("error: ", err)
+		log.Panic(err)
 	}
 
-	ox_key := myenv["OK_KEY"]
-	ox_id_s := myenv["OK_ID"]
-	ox_id, err := strconv.ParseInt(ox_id_s, 0, 64)
+	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		fmt.Println("error: ", err)
-	}
-
-	tg_key_env := myenv["TG_KEY"]
-
-	bot, err := tgbotapi.NewBotAPI(tg_key_env)
-	if err != nil {
-		log.Fatalf("tg token: %v\n", err)
+		log.Fatalf("tg token missing: %v\n", err)
 	}
 
 	ctx := context.Background()
@@ -73,6 +50,7 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
+
 		if _, ok := userDatabase[update.Message.From.ID]; !ok {
 
 			fmt.Printf("ID: %v\nusername: %s\n",
@@ -80,17 +58,8 @@ func main() {
 				update.Message.From.UserName,
 			)
 			userID := update.Message.From.ID
-			// if admin then get key from env
-			switch userID {
-			case minty_id:
-				comm.AddAdminToMap(minty_k, update.Message)
-			case a_id:
-				comm.AddAdminToMap(ak, update.Message)
-			case ox_id:
-				comm.AddAdminToMap(ox_key, update.Message)
-			default:
-				comm.AddNewUserToMap(update.Message)
-			}
+			// Dialog_status for Admins = 2, other users = 0
+			comm.CheckAdmin(userID, update.Message)
 
 		} else {
 
@@ -132,16 +101,9 @@ func main() {
 			case 5:
 				comm.CodexSequence(update.Message, ctx)
 			}
+
 		}
 
 	}
 
 } // end of main func
-
-// load enviroment variables from .env file
-func loadEnv() {
-	var err error
-	if myenv, err = godotenv.Read(envLoc); err != nil {
-		log.Printf("could not load env from %s: %v", envLoc, err)
-	}
-}
