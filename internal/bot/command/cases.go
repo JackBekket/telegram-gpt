@@ -22,7 +22,7 @@ func (c *Commander) InputYourAPIKey(updateMessage *tgbotapi.Message, updateDb *d
 	c.bot.Send(msg)
 
 	log.Printf(
-		"New user: id: %v\n\t\t\t\tusername: %s\n",
+		"New user: \tid: %v\n\t\t\t\tusername: %s\n",
 		c.userDb[updateMessage.From.ID].ID,
 		c.userDb[updateMessage.From.ID].Username,
 	)
