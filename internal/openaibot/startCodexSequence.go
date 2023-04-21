@@ -10,7 +10,8 @@ import (
 )
 
 func StartCodexSequence(promt string, ID int64, ctx context.Context, bot *tgbotapi.BotAPI) {
-
+	mu.Lock()
+	defer mu.Unlock()
 	userDatabase := db.UserMap
 	sessionDatabase := db.AiSessionMap
 	log.Printf(

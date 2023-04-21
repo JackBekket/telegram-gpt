@@ -24,7 +24,8 @@ func errorMessage(err error, bot *tgbotapi.BotAPI, ID int64, db map[int64]databa
 }
 
 func StartDialogSequence(promt string, ID int64, ctx context.Context, bot *tgbotapi.BotAPI) {
-
+	mu.Lock()
+	defer mu.Unlock()
 	userDatabase := database.UserMap
 	sessionDatabase := database.AiSessionMap
 

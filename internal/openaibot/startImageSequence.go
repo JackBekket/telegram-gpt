@@ -17,6 +17,8 @@ func StartImageSequence(
 	bot *tgbotapi.BotAPI,
 	updateMessage *tgbotapi.Message,
 ) {
+	mu.Lock()
+	defer mu.Unlock()
 	userDatabase := database.UserMap
 	sessionDatabase := database.AiSessionMap
 

@@ -3,12 +3,15 @@ package openaibot
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/JackBekket/telegram-gpt/internal/database"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	gogpt "github.com/sashabaranov/go-openai"
 )
+
+var mu = sync.Mutex{}
 
 func SetupSequenceWithKey(
 	ID int64,
@@ -73,7 +76,8 @@ func probeAnswer(
 	userDatabase map[int64]database.User,
 	sessionDatabase map[int64]database.AiSession,
 ) {
-
+	mu.Lock()
+	defer mu.Unlock()
 	msg := tgbotapi.NewMessage(userDatabase[ID].ID, probe)
 	bot.Send(msg)
 
