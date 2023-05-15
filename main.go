@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/JackBekket/telegram-gpt/internal/bot/command"
 	"github.com/JackBekket/telegram-gpt/internal/bot/env"
-	db "github.com/JackBekket/telegram-gpt/internal/database"
-
-	//passport "github.com/MoonSHRD/IKY-telegram-bot/artifacts/TGPassport"
-
+	"github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -30,12 +26,10 @@ func main() {
 		log.Fatalf("tg token missing: %v\n", err)
 	}
 
-	ctx := context.Background()
-
 	// init database and commander
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
-	comm := command.NewCommander(bot, userDatabase, sessionDatabase)
+	usersDatabase := database.UsersMap
+	ctx := context.Background()
+	comm := command.NewCommander(bot, usersDatabase, ctx)
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -43,7 +37,6 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
-
 	//whenever bot gets a new message, check for user id in the database happens, if it's a new user, the entry in the database is created.
 	for update := range updates {
 
@@ -51,55 +44,41 @@ func main() {
 			continue
 		}
 
-		if _, ok := userDatabase[update.Message.From.ID]; !ok {
-
-			fmt.Printf("ID: %v\nusername: %s\n",
-				update.Message.From.ID,
+		chatID := update.Message.From.ID
+		user, ok := usersDatabase[chatID]
+		if !ok {
+			log.Printf("ID: %v\nusername: %s\n",
+				chatID,
 				update.Message.From.UserName,
 			)
-			userID := update.Message.From.ID
-			// Dialog_status for Admins = 2, other users = 0
-			comm.CheckAdmin(userID, update.Message)
-
-		} else {
-
-			switch userDatabase[update.Message.From.ID].Dialog_status {
-
+			comm.CheckAdmin(chatID, update.Message)
+		}
+		if ok {
+			switch user.DialogStatus {
 			// first check for user status, (for a new user status 0 is set automatically),
 			// then user reply for the first bot message is logged to a database as name AND user status is updated
 			case 0:
-				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-					// update Dialog_status = 1
-					comm.InputYourAPIKey(update.Message, &updateDb)
-				}
+				comm.InputYourAPIKey(update.Message)
 			case 1:
-				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-					// update Dialog_status = 2
-					comm.ChooseModel(update.Message, &updateDb)
-				}
+				comm.ChooseModel(update.Message)
+
 			case 2:
-				if updateDb, ok := userDatabase[update.Message.From.ID]; ok {
-					switch update.Message.Text {
-					case "GPT-3.5":
-						// update Dialog_status = 3
-						comm.ModelGPT3DOT5(update.Message, &updateDb)
-					case "Codex":
-						// update Dialog_status = 4
-						comm.ModelCodex(update.Message, &updateDb)
-					// case "GPT-4":
-					// 	comm.ModelGPT4(update.Message, &updateDb)
-					default:
-						comm.WrongModel(update.Message, &updateDb)
-					}
+				switch update.Message.Text {
+				case "GPT-3.5":
+					comm.ModelGPT3DOT5(update.Message)
+				case "Codex":
+					comm.ModelCodex(update.Message)
+				// case "GPT-4":
+				// 	comm.ModelGPT4(update.Message)
+				default:
+					comm.WrongModel(update.Message)
 				}
 			case 3:
-				//  update Dialog_Status = 4, for model GPT-3.5
-				comm.ConnectingToOpenAiWithLanguage(update.Message, ctx)
+				comm.ConnectingToOpenAiWithLanguage(update.Message)
 			case 4:
-				// update update Dialog_Status = 4, for model GPT-3.5
-				comm.DialogSequence(update.Message, ctx)
+				comm.DialogSequence(update.Message)
 			case 5:
-				comm.CodexSequence(update.Message, ctx)
+				comm.CodexSequence(update.Message)
 			}
 
 		}
