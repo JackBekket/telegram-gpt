@@ -1,9 +1,9 @@
 package command
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/JackBekket/telegram-gpt/internal/database"
+	db "github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -12,20 +12,24 @@ func (c *Commander) AddAdminToMap(
 	updateMessage *tgbotapi.Message,
 
 ) {
-	c.userDb[updateMessage.From.ID] = database.User{
-		ID:            updateMessage.Chat.ID,
-		Username:      updateMessage.Chat.UserName,
-		Dialog_status: 2,
-		Gpt_key:       adminKey,
-		Admin:         true,
+	chatID := updateMessage.From.ID
+	c.usersDb[chatID] = db.User{
+		ID:           chatID,
+		Username:     updateMessage.Chat.UserName,
+		DialogStatus: 2,
+		Admin:        true,
+		AiSession: db.AiSession{
+			GptKey: adminKey,
+		},
 	}
 
-	fmt.Printf("%s authorized\n", updateMessage.Chat.UserName)
+	admin := c.usersDb[chatID]
+	log.Printf("%s authorized\n", admin.Username)
 
-	msg := tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, "authorized: "+updateMessage.Chat.UserName)
+	msg := tgbotapi.NewMessage(admin.ID, "authorized: "+admin.Username)
 	c.bot.Send(msg)
 
-	msg = tgbotapi.NewMessage(c.userDb[updateMessage.From.ID].ID, msgTemplates["case1"])
+	msg = tgbotapi.NewMessage(admin.ID, msgTemplates["case1"])
 	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("GPT-3.5"),

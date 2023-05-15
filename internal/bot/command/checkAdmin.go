@@ -7,13 +7,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Updates "dialog_status" in the database. Admins - 2, other users - 0.
+// Updates "dialogStatus" in the database. Admins - 2, other users - 0.
 //
 // Loads the key from env into the database.
 func (c *Commander) CheckAdmin(id int64, updateMessage *tgbotapi.Message) {
 
 	adminID := env.LoadAdminsID()
 	adminAiKey := env.LoadAdminsAiKey()
+	chatID := updateMessage.From.ID
 
 	switch id {
 	case adminID["ADMIN_ID"]:
@@ -32,7 +33,7 @@ func (c *Commander) CheckAdmin(id int64, updateMessage *tgbotapi.Message) {
 		}
 		if key == "" {
 			msg := tgbotapi.NewMessage(
-				updateMessage.From.ID,
+				chatID,
 				"env \"%s\" is empty.",
 			)
 			c.bot.Send(msg)
@@ -47,7 +48,7 @@ func (c *Commander) CheckAdmin(id int64, updateMessage *tgbotapi.Message) {
 		}
 		if key == "" {
 			msg := tgbotapi.NewMessage(
-				updateMessage.From.ID,
+				chatID,
 				"env \"%s\" is empty.",
 			)
 			c.bot.Send(msg)
@@ -62,7 +63,7 @@ func (c *Commander) CheckAdmin(id int64, updateMessage *tgbotapi.Message) {
 		}
 		if key == "" {
 			msg := tgbotapi.NewMessage(
-				updateMessage.From.ID,
+				chatID,
 				"env \"%s\" is empty.",
 			)
 			c.bot.Send(msg)
