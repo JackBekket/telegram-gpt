@@ -2,41 +2,36 @@ package openaibot
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	db "github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func StartCodexSequence(promt string, ID int64, ctx context.Context, bot *tgbotapi.BotAPI) {
+func StartCodexSequence(bot *tgbotapi.BotAPI, chatID int64, promt string, ctx context.Context) {
 	mu.Lock()
 	defer mu.Unlock()
-	userDatabase := db.UserMap
-	sessionDatabase := db.AiSessionMap
+	user := db.UsersMap[chatID]
 	log.Printf(
 		"GPT model: %s,\npromt: %s\n",
-		sessionDatabase[ID].Gpt_model,
+		user.AiSession.GptModel,
 		promt,
 	)
 
 	req := createCodexRequest(promt)
-	c := sessionDatabase[ID].Gpt_client
+	c := user.AiSession.GptClient
 
 	resp, err := c.CreateCompletion(ctx, req)
 	if err != nil {
-
-		errorMessage(err, bot, ID, userDatabase)
-
+		errorMessage(err, bot, user)
 	} else {
-		fmt.Println(resp.Choices[0].Text)
-		resp_text := resp.Choices[0].Text
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, resp_text)
+		respText := resp.Choices[0].Text
+		msg := tgbotapi.NewMessage(chatID, respText)
 		msg.ParseMode = "MARKDOWN"
 		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 5
-		userDatabase[ID] = updateDb
+
+		user.DialogStatus = 5
+		db.UsersMap[chatID] = user
 	}
 
 }

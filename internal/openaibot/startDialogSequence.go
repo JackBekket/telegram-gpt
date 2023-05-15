@@ -2,55 +2,56 @@ package openaibot
 
 import (
 	"context"
-	"fmt"
 	"log"
 
-	"github.com/JackBekket/telegram-gpt/internal/database"
+	db "github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Notifies the user that an error occurred while creating the request.
 // "An error has occured. In order to proceed we need to recreate client and initialize new session"
-func errorMessage(err error, bot *tgbotapi.BotAPI, ID int64, db map[int64]database.User) {
-
+// Removes a user from the database (тemporary solution).
+func errorMessage(err error, bot *tgbotapi.BotAPI, user db.User) {
 	log.Println("error :", err)
-	msg := tgbotapi.NewMessage(db[ID].ID, err.Error())
+	msg := tgbotapi.NewMessage(user.ID, err.Error())
 	bot.Send(msg)
-	msg = tgbotapi.NewMessage(db[ID].ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
+	msg = tgbotapi.NewMessage(user.ID, "an error has occured. In order to proceed we need to recreate client and initialize new session")
 	bot.Send(msg)
-	updateDb := db[ID]
-	updateDb.Dialog_status = 0
-	db[ID] = updateDb
+
+	userDb := db.UsersMap
+	delete(userDb, user.ID)
+	// updateDb := userDatabase[ID]
+	// updateDb.Dialog_status = 0
+	// userDatabase[ID] = updateDb
 }
 
-func StartDialogSequence(promt string, ID int64, ctx context.Context, bot *tgbotapi.BotAPI) {
+func StartDialogSequence(bot *tgbotapi.BotAPI, chatID int64, promt string, ctx context.Context) {
 	mu.Lock()
 	defer mu.Unlock()
-	userDatabase := database.UserMap
-	sessionDatabase := database.AiSessionMap
 
-	gpt_model := sessionDatabase[ID].Gpt_model
+	user := db.UsersMap[chatID]
+
+	gptModel := user.AiSession.GptModel
 	log.Printf(
 		"GPT model: %s,\npromt: %s\n",
-		gpt_model,
+		gptModel,
 		promt,
 	)
 
-	req := createComplexChatRequest(promt, gpt_model)
-	c := sessionDatabase[ID].Gpt_client
+	req := createComplexChatRequest(promt, gptModel)
+	c := user.AiSession.GptClient
 
 	resp, err := c.CreateChatCompletion(ctx, req)
 	if err != nil {
-		errorMessage(err, bot, ID, userDatabase)
+		errorMessage(err, bot, user)
 	} else {
-		fmt.Println(resp.Choices[0].Message.Content)
-		resp_text := resp.Choices[0].Message.Content
-		msg := tgbotapi.NewMessage(userDatabase[ID].ID, resp_text)
+		respText := resp.Choices[0].Message.Content
+		msg := tgbotapi.NewMessage(chatID, respText)
 		msg.ParseMode = "MARKDOWN"
 		bot.Send(msg)
-		updateDb := userDatabase[ID]
-		updateDb.Dialog_status = 4
-		userDatabase[ID] = updateDb
+
+		user.DialogStatus = 4
+		db.UsersMap[chatID] = user
 	}
 
 }
