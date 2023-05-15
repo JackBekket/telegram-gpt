@@ -5,14 +5,15 @@ import (
 	gogpt "github.com/sashabaranov/go-openai"
 )
 
-func CreateClient(apiKey string, ID int64, modelName string) *gogpt.Client {
-	sessionDatabase := db.AiSessionMap
-	client := gogpt.NewClient(apiKey)
+func CreateClient(gptKey string, chatID int64, modelName string) *gogpt.Client {
 
-	sessionDatabase[ID] = db.AiSession{
-		Gpt_key:    apiKey,
-		Gpt_client: client,
-		Gpt_model:  modelName,
+	client := gogpt.NewClient(gptKey)
+	db.UsersMap[chatID] = db.User{
+		AiSession: db.AiSession{
+			GptKey:    gptKey,
+			GptClient: *client,
+			GptModel:  modelName,
+		},
 	}
 
 	return client

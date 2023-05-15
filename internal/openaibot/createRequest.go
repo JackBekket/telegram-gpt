@@ -18,9 +18,9 @@ import gogpt "github.com/sashabaranov/go-openai"
 	}
 */
 
-func createComplexChatRequest(input string, model_name string) gogpt.ChatCompletionRequest {
+func createComplexChatRequest(input string, modelName string) gogpt.ChatCompletionRequest {
 	return gogpt.ChatCompletionRequest{
-		Model:     model_name,
+		Model:     modelName,
 		MaxTokens: 3000,
 		Messages: []gogpt.ChatCompletionMessage{
 			{
@@ -65,9 +65,9 @@ func CreateSimpleTextRequest(input string) (gogpt.CompletionRequest){
 /*
 // model should be gogpt.GPT3TextDavinci003 or gogpt.CodexCodeDavinci002
 // WARN -- deprecated!
-func CreateComplexRequest (input string, model_name string) (gogpt.CompletionRequest) {
+func CreateComplexRequest (input string, modelName string) (gogpt.CompletionRequest) {
 	req := gogpt.CompletionRequest{
-		Model: model_name,
+		Model: modelName,
 		MaxTokens: 2048,
 		Prompt: input,
 		Echo: true,
