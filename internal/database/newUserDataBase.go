@@ -1,13 +1,20 @@
 package database
 
+import gogpt "github.com/sashabaranov/go-openai"
+
 // main database for dialogs, key (int64) is telegram user id
 type User struct {
-	ID            int64
-	Username      string
-	Dialog_status int64
-	Gpt_key       string
-	Admin         bool
-	//gpt_client gpt3.Client
+	ID           int64
+	Username     string
+	DialogStatus int8
+	Admin        bool
+	AiSession    AiSession
 }
 
-var UserMap = make(map[int64]User)
+type AiSession struct {
+	GptKey    string
+	GptClient gogpt.Client
+	GptModel  string
+}
+
+var UsersMap = make(map[int64]User)
