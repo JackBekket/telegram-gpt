@@ -5,57 +5,80 @@ import (
 	"log"
 	"sync"
 
-	"github.com/JackBekket/telegram-gpt/internal/database"
+	db "github.com/JackBekket/telegram-gpt/internal/database"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	gogpt "github.com/sashabaranov/go-openai"
 )
 
 var mu = sync.Mutex{}
 
 func SetupSequenceWithKey(
-	ID int64,
 	bot *tgbotapi.BotAPI,
-	aiKey, username, model, language string,
+	user db.User,
+	language string,
 	ctx context.Context,
 ) {
-	userDatabase := database.UserMap
-	sessionDatabase := database.AiSessionMap
+	mu.Lock()
+	defer mu.Unlock()
+	chatID := user.ID
+	gptKey := user.AiSession.GptKey
+	model := user.AiSession.GptModel
 
-	client := CreateClient(aiKey, ID, model) // creating client (but we don't know if it works)
+	client := CreateClient(gptKey, chatID, model) // creating client (but we don't know if it works)
+	user.AiSession.GptClient = *client
 
-	if language == "eng" {
-		probe, err := tryLanguage(client, model, 0, ctx)
+	switch language {
+	case "English":
+		probe, err := tryLanguage(user, "", 1, ctx)
 		if err != nil {
-			errorMessage(err, bot, ID, userDatabase)
+			errorMessage(err, bot, user)
 		} else {
-			probeAnswer(probe, username, aiKey, ID, client, model, bot, userDatabase, sessionDatabase)
+			msg := tgbotapi.NewMessage(chatID, probe)
+			bot.Send(msg)
+			user.DialogStatus = 4
+			db.UsersMap[chatID] = user
+		}
+	case "Russian":
+		probe, err := tryLanguage(user, "", 2, ctx)
+		if err != nil {
+			errorMessage(err, bot, user)
+		} else {
+			msg := tgbotapi.NewMessage(chatID, probe)
+			bot.Send(msg)
+			user.DialogStatus = 4
+			db.UsersMap[chatID] = user
+		}
+	default:
+		probe, err := tryLanguage(user, language, 0, ctx)
+		if err != nil {
+			errorMessage(err, bot, user)
+		} else {
+			msg := tgbotapi.NewMessage(chatID, probe)
+			bot.Send(msg)
+			user.DialogStatus = 4
+			db.UsersMap[chatID] = user
 		}
 	}
-
-	if language == "ru" {
-		probe, err := tryLanguage(client, model, 1, ctx)
-		if err != nil {
-			errorMessage(err, bot, ID, userDatabase)
-		} else {
-			probeAnswer(probe, username, aiKey, ID, client, model, bot, userDatabase, sessionDatabase)
-
-		}
-	}
-
 }
 
-func tryLanguage(client *gogpt.Client, model string, language int, ctx context.Context) (string, error) {
-	var languagepromt string
-	if language == 0 {
-		languagepromt = "Hi, Do you speak english?"
-	}
-	if language == 1 {
-		languagepromt = "Привет, ты говоришь по русски?"
-	}
-	log.Printf("Language: %v\n", languagepromt)
+// LanguageCode: 0 - default, 1 - Russian, 2 - English
+func tryLanguage(user db.User, language string, languageCode int, ctx context.Context) (string, error) {
+	var languagePromt string
 
-	req := createComplexChatRequest(languagepromt, model)
+	switch languageCode {
+	case 1:
+		languagePromt = "Hi, Do you speak english?"
+	case 2:
+		languagePromt = "Привет, ты говоришь по-русски?"
+	default:
+		languagePromt = language
+	}
+
+	log.Printf("Language: %v\n", languagePromt)
+	model := user.AiSession.GptModel
+	client := user.AiSession.GptClient
+
+	req := createComplexChatRequest(languagePromt, model)
 	log.Printf("request: %v\n", req)
 
 	resp, err := client.CreateChatCompletion(ctx, req)
@@ -65,35 +88,4 @@ func tryLanguage(client *gogpt.Client, model string, language int, ctx context.C
 		answer := resp.Choices[0].Message.Content
 		return answer, nil
 	}
-}
-
-func probeAnswer(
-	probe, username, aiKey string,
-	ID int64,
-	client *gogpt.Client,
-	model string,
-	bot *tgbotapi.BotAPI,
-	userDatabase map[int64]database.User,
-	sessionDatabase map[int64]database.AiSession,
-) {
-	mu.Lock()
-	defer mu.Unlock()
-	msg := tgbotapi.NewMessage(userDatabase[ID].ID, probe)
-	bot.Send(msg)
-
-	userDatabase[ID] = database.User{
-		ID:            ID,
-		Username:      username,
-		Dialog_status: 0,
-		Gpt_key:       aiKey}
-
-	sessionDatabase[ID] = database.AiSession{
-		Gpt_key:    aiKey,
-		Gpt_client: client,
-		Gpt_model:  model,
-	}
-
-	updateDb := userDatabase[ID]
-	updateDb.Dialog_status = 4
-	userDatabase[ID] = updateDb
 }
