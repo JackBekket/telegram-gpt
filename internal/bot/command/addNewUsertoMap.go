@@ -12,14 +12,14 @@ func (c *Commander) AddNewUserToMap(updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
 	c.usersDb[chatID] = database.User{
 		ID:           chatID,
-		Username:     updateMessage.Chat.UserName,
+		Username:     updateMessage.From.UserName,
 		DialogStatus: 0,
 		Admin:        false,
 	}
 
 	user := c.usersDb[chatID]
 	log.Printf(
-		"New user: \tid: %v\n\t\t\t\tusername: %s\n",
+		"Add new user to database: id: %v, username: %s\n",
 		user.ID,
 		user.Username,
 	)

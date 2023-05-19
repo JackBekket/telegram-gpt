@@ -15,7 +15,7 @@ func (c *Commander) AddAdminToMap(
 	chatID := updateMessage.From.ID
 	c.usersDb[chatID] = db.User{
 		ID:           chatID,
-		Username:     updateMessage.Chat.UserName,
+		Username:     updateMessage.From.UserName,
 		DialogStatus: 2,
 		Admin:        true,
 		AiSession: db.AiSession{
