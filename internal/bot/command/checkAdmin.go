@@ -3,14 +3,14 @@ package command
 import (
 	"fmt"
 
-	"github.com/JackBekket/telegram-gpt/internal/bot/evn"
+	"github.com/JackBekket/telegram-gpt/internal/bot/env"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Updates "dialogStatus" in the database. Admins - 2, other users - 0.
 //
 // Loads the key from env into the database.
-func (c *Commander) CheckAdmin(adminData map[string]evn.AdminData, updateMessage *tgbotapi.Message) {
+func (c *Commander) CheckAdmin(adminData map[string]env.AdminData, updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
 	for evn, admin := range adminData {
 		if admin.ID == chatID {
