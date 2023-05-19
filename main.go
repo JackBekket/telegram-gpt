@@ -5,23 +5,23 @@ import (
 	"log"
 
 	"github.com/JackBekket/telegram-gpt/internal/bot/command"
-	"github.com/JackBekket/telegram-gpt/internal/bot/evn"
+	"github.com/JackBekket/telegram-gpt/internal/bot/env"
 	"github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func main() {
-	err := evn.Load()
+	err := env.Load()
 	if err != nil {
 		log.Panicf("could not load env from: %v", err)
 	}
 
-	token, err := evn.LoadTGToken()
+	token, err := env.LoadTGToken()
 	if err != nil {
 		log.Panic(err)
 	}
 
-	adminData := evn.LoadAdminData()
+	adminData := env.LoadAdminData()
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {

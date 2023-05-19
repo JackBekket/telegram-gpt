@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/JackBekket/telegram-gpt/internal/bot/command"
-	"github.com/JackBekket/telegram-gpt/internal/bot/evn"
+	"github.com/JackBekket/telegram-gpt/internal/bot/env"
 	"github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sashabaranov/go-openai"
@@ -88,7 +88,7 @@ func TestCommander_CheckAdmin(t *testing.T) {
 	commander := command.NewCommander(bot, usersDb, ctx)
 	t.Run("Checks correct assigment to the database", func(t *testing.T) {
 		//Emulation of paged data from .env file
-		adminData := map[string]evn.AdminData{
+		adminData := map[string]env.AdminData{
 			"ADMIN_ID": {
 				ID:     1111,
 				GPTKey: "admin_key",
@@ -187,7 +187,7 @@ func TestCommander_CheckAdmin(t *testing.T) {
 				UserName: "testchat",
 			},
 		}
-		adminData := map[string]evn.AdminData{
+		adminData := map[string]env.AdminData{
 			"OK_ID": {
 				ID:     1111,
 				GPTKey: "", // Пустой ключ
