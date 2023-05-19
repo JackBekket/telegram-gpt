@@ -22,9 +22,8 @@ func SetupSequenceWithKey(
 	defer mu.Unlock()
 	chatID := user.ID
 	gptKey := user.AiSession.GptKey
-	model := user.AiSession.GptModel
 
-	client := CreateClient(gptKey, chatID, model) // creating client (but we don't know if it works)
+	client := CreateClient(gptKey) // creating client (but we don't know if it works)
 	user.AiSession.GptClient = *client
 
 	switch language {
