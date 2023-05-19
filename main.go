@@ -5,21 +5,23 @@ import (
 	"log"
 
 	"github.com/JackBekket/telegram-gpt/internal/bot/command"
-	"github.com/JackBekket/telegram-gpt/internal/bot/env"
+	"github.com/JackBekket/telegram-gpt/internal/bot/evn"
 	"github.com/JackBekket/telegram-gpt/internal/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func main() {
-	err := env.Load()
+	err := evn.Load()
 	if err != nil {
 		log.Panicf("could not load env from: %v", err)
 	}
 
-	token, err := env.LoadTGToken()
+	token, err := evn.LoadTGToken()
 	if err != nil {
 		log.Panic(err)
 	}
+
+	adminData := evn.LoadAdminData()
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
@@ -43,15 +45,10 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
-
 		chatID := update.Message.From.ID
 		user, ok := usersDatabase[chatID]
 		if !ok {
-			log.Printf("ID: %v\nusername: %s\n",
-				chatID,
-				update.Message.From.UserName,
-			)
-			comm.CheckAdmin(chatID, update.Message)
+			comm.CheckAdmin(adminData, update.Message)
 		}
 		if ok {
 			switch user.DialogStatus {
