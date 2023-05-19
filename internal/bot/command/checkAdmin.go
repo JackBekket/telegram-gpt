@@ -20,7 +20,7 @@ func (c *Commander) CheckAdmin(adminData map[string]env.AdminData, updateMessage
 			} else {
 				msg := tgbotapi.NewMessage(
 					chatID,
-					fmt.Sprintf("evn \"%s\" is missing.", evn),
+					fmt.Sprintf("env \"%s\" is missing.", evn),
 				)
 				c.bot.Send(msg)
 				// Directs to case 0
