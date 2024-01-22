@@ -17,13 +17,15 @@ func SetupSequenceWithKey(
 	user db.User,
 	language string,
 	ctx context.Context,
+	local_ap string,
 ) {
 	mu.Lock()
 	defer mu.Unlock()
 	chatID := user.ID
 	gptKey := user.AiSession.GptKey
 
-	client := CreateClient(gptKey) // creating client (but we don't know if it works)
+	//client := CreateClient(gptKey) // creating client (but we don't know if it works)
+	client := CreateLocalhostClientWithCheck(local_ap,gptKey)
 	user.AiSession.GptClient = *client
 
 	switch language {

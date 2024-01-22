@@ -22,6 +22,7 @@ func main() {
 	}
 
 	adminData := env.LoadAdminData()
+	local_access_pwd:= env.LoadLocalPD()
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
@@ -71,7 +72,7 @@ func main() {
 					comm.WrongModel(update.Message)
 				}
 			case 3:
-				comm.ConnectingToOpenAiWithLanguage(update.Message)
+				comm.ConnectingToOpenAiWithLanguage(update.Message,local_access_pwd)
 			case 4:
 				comm.DialogSequence(update.Message)
 			case 5:

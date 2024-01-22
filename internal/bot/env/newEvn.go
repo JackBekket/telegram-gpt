@@ -16,6 +16,7 @@ var env map[string]string
 type AdminData struct {
 	ID     int64
 	GPTKey string
+	localhost_password string
 }
 
 func Load() error {
@@ -84,4 +85,9 @@ func LoadTGToken() (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func LoadLocalPD() (string) {
+	token:= env["LOCALHOST_PWD"]
+	return token
 }

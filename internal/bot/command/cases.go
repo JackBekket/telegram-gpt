@@ -140,15 +140,16 @@ func (c *Commander) WrongModel(updateMessage *tgbotapi.Message) {
 // Message: "connecting to openAI"
 //
 // update update Dialog_Status = 4, for model GPT-3.5
-func (c *Commander) ConnectingToOpenAiWithLanguage(updateMessage *tgbotapi.Message) {
+func (c *Commander) ConnectingToOpenAiWithLanguage(updateMessage *tgbotapi.Message, lpwd string) {
 	chatID := updateMessage.From.ID
 	language := updateMessage.Text
 	user := c.usersDb[chatID]
+	
 
-	msg := tgbotapi.NewMessage(user.ID, "connecting to openAI")
+	msg := tgbotapi.NewMessage(user.ID, "connecting to node")
 	c.bot.Send(msg)
 
-	go openaibot.SetupSequenceWithKey(c.bot, user, language, c.ctx)
+	go openaibot.SetupSequenceWithKey(c.bot, user, language, c.ctx, lpwd)
 }
 
 // Generates an image with the /image command.
