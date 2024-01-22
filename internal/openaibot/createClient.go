@@ -8,11 +8,8 @@ import (
 )
 
 func CreateClient(gptKey string) *gogpt.Client {
-	if (gptKey == "localhost") {
-		return CreateLocalhostClient()
-	} else {
 	return gogpt.NewClient(gptKey)
-	}
+	
 }
 
 //
@@ -40,7 +37,7 @@ func CreateLocalhostClient() *gogpt.Client {
 func CreateLocalhostClientWithCheck(lpwd string,user_promt string) *gogpt.Client {
 	if (lpwd == user_promt) {
 		log.Println("creating localhost client")
-		cfg := gogpt.DefaultConfig("")
+		cfg := gogpt.DefaultConfig(user_promt)
 		cfg.BaseURL = "http://127.0.0.1:8080"
 		return gogpt.NewClientWithConfig(cfg)
 	} else {
