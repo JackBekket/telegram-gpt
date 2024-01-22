@@ -83,6 +83,7 @@ func tryLanguage(user db.User, language string, languageCode int, ctx context.Co
 	log.Printf("Language: %v\n", languagePromt)
 	model := user.AiSession.GptModel
 	client := user.AiSession.GptClient
+	log.Println("client: ", client)
 
 	req := createComplexChatRequest(languagePromt, model)
 	log.Printf("request: %v\n", req)
