@@ -1,6 +1,8 @@
 package openaibot
 
 import (
+	"log"
+
 	gogpt "github.com/sashabaranov/go-openai"
 	//"github.com/JackBekket/telegram-gpt/internal/bot/env"
 )
@@ -37,6 +39,7 @@ func CreateLocalhostClient() *gogpt.Client {
 
 func CreateLocalhostClientWithCheck(lpwd string,user_promt string) *gogpt.Client {
 	if (lpwd == user_promt) {
+		log.Println("creating localhost client")
 		cfg := gogpt.DefaultConfig("")
 		cfg.BaseURL = "http://127.0.0.1:8080"
 		return gogpt.NewClientWithConfig(cfg)

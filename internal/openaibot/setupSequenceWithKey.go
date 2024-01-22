@@ -25,6 +25,7 @@ func SetupSequenceWithKey(
 	gptKey := user.AiSession.GptKey
 
 	//client := CreateClient(gptKey) // creating client (but we don't know if it works)
+	log.Println("Setting up sequence with key")
 	client := CreateLocalhostClientWithCheck(local_ap,gptKey)
 	user.AiSession.GptClient = *client
 
