@@ -36,11 +36,14 @@ func CreateLocalhostClient() *gogpt.Client {
 
 func CreateLocalhostClientWithCheck(lpwd string,user_promt string) *gogpt.Client {
 	if (lpwd == user_promt) {
+		log.Println(lpwd)
+		log.Println(user_promt)
 		log.Println("creating localhost client")
 		cfg := gogpt.DefaultConfig(user_promt)
 		cfg.BaseURL = "http://127.0.0.1:8080"
 		return gogpt.NewClientWithConfig(cfg)
 	} else {
+		log.Println("creating connection to open-ai")
 		return CreateClient(user_promt)
 	}
 
