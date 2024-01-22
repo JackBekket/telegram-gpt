@@ -27,7 +27,11 @@ func SetupSequenceWithKey(
 	//client := CreateClient(gptKey) // creating client (but we don't know if it works)
 	log.Println("Setting up sequence with key")
 	client := CreateLocalhostClientWithCheck(local_ap,gptKey)
+	log.Println("local_ap: ", local_ap)
+	//log.Println("client: ", client.config)
 	user.AiSession.GptClient = *client
+
+	
 
 	switch language {
 	case "English":

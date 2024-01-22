@@ -148,7 +148,7 @@ func (c *Commander) ConnectingToOpenAiWithLanguage(updateMessage *tgbotapi.Messa
 
 	msg := tgbotapi.NewMessage(user.ID, "connecting to node")
 	c.bot.Send(msg)
-
+	log.Println("Connecting sonewhere with language")
 	go openaibot.SetupSequenceWithKey(c.bot, user, language, c.ctx, lpwd)
 }
 
