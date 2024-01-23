@@ -10,6 +10,7 @@ type User struct {
 	Admin        bool
 	AiSession    AiSession
 	Network      string
+	local_ai_pass string
 }
 
 type AiSession struct {

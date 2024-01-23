@@ -38,7 +38,8 @@ func (c *Commander) ChooseNetwork(updateMessage *tgbotapi.Message) {
 	// validate message from previouse side
 	// TODO
 	gptKey := updateMessage.Text
-	c.AttachKey(gptKey,chatID)		// save gpt key
+	//c.AttachKey(gptKey,chatID)		// save gpt key
+	user.AiSession.GptKey = gptKey
 
 
 	// render menu
@@ -62,11 +63,11 @@ func (c *Commander) ChooseNetwork(updateMessage *tgbotapi.Message) {
 //
 //	update Dialog_Status = 2
 func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
-	ok := true
+	ok := false
 	chatID := updateMessage.From.ID
 	//gptKey := updateMessage.Text
 	user := c.usersDb[chatID]
-	log.Println("chooseModel function worked")
+	//log.Println("chooseModel function worked")
 
 	// I can't validate key at this stage. The only way to validate key is to send test sequence (see case 3)
 	// Since this part is oftenly get an usernamecaught exeption, we debug what user input as key. It's bad, I know, but usernametil we got key validation we need this part.
@@ -79,11 +80,11 @@ func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
 	//TODO render different menu with different models for openai and localhost
 	if (network == "openai") {
 		c.RenderModelMenuOAI(chatID)
+		ok = true
 	}
 	if (network == "localai") {
 		c.RenderModelMenuLAI(chatID)
-	} else {
-		ok = false
+		ok = true
 	}
 
 	if (ok) {
@@ -207,6 +208,10 @@ func (c *Commander) attachModel(model_name string, chatID int64) {
 func (c *Commander) AttachNetworkAndUpdDialog(network string, chatID int64) {
 	c.AttachNetwork(network,chatID)
 	user := c.usersDb[chatID]
+
+	msg := tgbotapi.NewMessage(user.ID, "your session network: "+network)
+	c.bot.Send(msg)
+
 	user.DialogStatus = 1
 	c.usersDb[chatID] = user
 }
@@ -279,11 +284,11 @@ func (c *Commander) ConnectingToOpenAiWithLanguage(updateMessage *tgbotapi.Messa
 	chatID := updateMessage.From.ID
 	language := updateMessage.Text
 	user := c.usersDb[chatID]
-	
+	log.Println("check gpt key exist:", user.AiSession.GptKey)
 
 	msg := tgbotapi.NewMessage(user.ID, "connecting to node")
 	c.bot.Send(msg)
-	log.Println("Connecting sonewhere with language")
+	
 	go openaibot.SetupSequenceWithKey(c.bot, user, language, c.ctx, lpwd)
 }
 

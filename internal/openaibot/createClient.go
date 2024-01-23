@@ -1,6 +1,7 @@
 package openaibot
 
 import (
+	"errors"
 	"log"
 
 	gogpt "github.com/sashabaranov/go-openai"
@@ -34,17 +35,18 @@ func CreateLocalhostClient() *gogpt.Client {
 	return gogpt.NewClientWithConfig(cfg)
 }
 
-func CreateLocalhostClientWithCheck(lpwd string,user_promt string) *gogpt.Client {
+func CreateLocalhostClientWithCheck(lpwd string,user_promt string) (*gogpt.Client, error) {
 	if (lpwd == user_promt) {
 		log.Println(lpwd)
 		log.Println(user_promt)
 		log.Println("creating localhost client")
 		cfg := gogpt.DefaultConfig(user_promt)
 		cfg.BaseURL = "http://127.0.0.1:8080"
-		return gogpt.NewClientWithConfig(cfg)
+		return gogpt.NewClientWithConfig(cfg),nil
 	} else {
-		log.Println("creating connection to open-ai")
-		return CreateClient(user_promt)
+		log.Println("password to access localhost AI is not correct")
+		//return CreateClient(user_promt)
+		return nil, errors.New("local pwd incorrect")
 	}
 
 }

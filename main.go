@@ -87,11 +87,14 @@ func main() {
 					comm.AttachNetworkAndUpdDialog("openai", update.Message.From.ID)
 					//comm.ChangeDialogStatus(update.Message.From.ID,1)	// GOTO dialog status 1
 					//user.DialogStatus = 1
+					comm.ChooseModel(update.Message)
 				case "localai" :
 					comm.AttachNetworkAndUpdDialog("localai", update.Message.From.ID)
 					//comm.ChangeDialogStatus(update.Message.From.ID,1)
 					//user.DialogStatus = 1
+					comm.ChooseModel(update.Message)
 				}
+				//user.DialogStatus = 1
 			}
 
 		}

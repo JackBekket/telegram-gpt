@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	db "github.com/JackBekket/telegram-gpt/internal/database"
+	"github.com/sashabaranov/go-openai"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -23,10 +24,32 @@ func SetupSequenceWithKey(
 	defer mu.Unlock()
 	chatID := user.ID
 	gptKey := user.AiSession.GptKey
+	log.Println("user GPT key from session: ", gptKey)
+	u_network := user.Network
+	log.Println("user network from session: ", u_network)
+	var client *openai.Client
+	//u_pwd := 
+
+
+	if (u_network == "openai") {
+		log.Println("Setting up sequence with key")
+		log.Println("Network is openai, initiating creating client")
+		client = CreateClient(gptKey)
+	} 
+	if (u_network == "localhost") {
+		log.Println("Network is localhost, creating local client")
+		//var err error
+		client_check, err := CreateLocalhostClientWithCheck(local_ap,gptKey)
+		if err != nil {
+			errorMessage(err,bot,user)
+		} else {
+			client = client_check
+		}
+	}
 
 	//client := CreateClient(gptKey) // creating client (but we don't know if it works)
-	log.Println("Setting up sequence with key")
-	client := CreateLocalhostClientWithCheck(local_ap,gptKey)
+	//log.Println("Setting up sequence with key")
+	//client := CreateLocalhostClientWithCheck(local_ap,gptKey)
 	log.Println("local_ap: ", local_ap)
 	//log.Println("client: ", client.config)
 	user.AiSession.GptClient = *client
