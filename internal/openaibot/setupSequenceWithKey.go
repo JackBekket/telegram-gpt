@@ -37,7 +37,7 @@ func SetupSequenceWithKey(
 		log.Println("Network is openai, initiating creating client")
 		client = CreateClient(gptKey)
 	} 
-	if (u_network == "localhost") {
+	if (u_network == "localai") {
 		log.Println("Network is localhost, creating local client")
 		//var err error
 		client_check, err := CreateLocalhostClientWithCheck(local_ap,gptKey)
