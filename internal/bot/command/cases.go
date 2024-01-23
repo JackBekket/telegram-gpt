@@ -100,19 +100,24 @@ func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
 func (c *Commander) HandleModelChoose(updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
 	model_name := updateMessage.Text
-	//user := c.usersDb[chatID]
+	user := c.usersDb[chatID]
 	switch model_name {
 	case "GPT-3.5":
 		c.ModelGPT3DOT5(updateMessage)
 	case "wizard-uncensored-13b":
 	 	c.attachModel(model_name,chatID)
-		c.ChangeDialogStatus(chatID,3)
+		//c.ChangeDialogStatus(chatID,3)
+		user.DialogStatus = 3
+		c.usersDb[chatID] = user
 	case "wizard-uncensored-30b":
 		c.attachModel(model_name,chatID)
-		c.ChangeDialogStatus(chatID,3)
+		//c.ChangeDialogStatus(chatID,3)
+		user.DialogStatus = 3
+		c.usersDb[chatID] = user
 	default:
 		c.WrongModel(updateMessage)
 	}
+	
 }
 
 // Message: "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language".
