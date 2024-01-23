@@ -9,6 +9,7 @@ type User struct {
 	DialogStatus int8
 	Admin        bool
 	AiSession    AiSession
+	Network      string
 }
 
 type AiSession struct {

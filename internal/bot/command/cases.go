@@ -21,33 +21,97 @@ func (c *Commander) InputYourAPIKey(updateMessage *tgbotapi.Message) {
 	)
 	c.bot.Send(msg)
 
-	user.DialogStatus = 1
+	user.DialogStatus = 6
 	c.usersDb[chatID] = user
 }
+
+
+// TODO:
+// 1. figure out which dialog status is inputed here and which outputed
+// 2. figure out how to place it in main menu
+// 3. -----
+// 4. this function should render choose network menu
+func (c *Commander) ChooseNetwork(updateMessage *tgbotapi.Message) {
+	chatID := updateMessage.From.ID
+	user := c.usersDb[chatID]
+
+	// validate message from previouse side
+	// TODO
+	gptKey := updateMessage.Text
+	c.AttachKey(gptKey,chatID)		// save gpt key
+
+
+	// render menu
+	msg := tgbotapi.NewMessage(user.ID, msgTemplates["case1"])
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("openAI"),
+			tgbotapi.NewKeyboardButton("localai")),
+		
+	)
+	c.bot.Send(msg)
+
+	user.DialogStatus = 7	 // TODO: change it  // this is output dialog status
+	c.usersDb[chatID] = user // commit changes
+
+}
+
+
 
 // Message: case1 - "Choose model to use. GPT3 is for text-based tasks, Codex for codegeneration.".
 //
 //	update Dialog_Status = 2
 func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
+	ok := true
 	chatID := updateMessage.From.ID
-	gptKey := updateMessage.Text
+	//gptKey := updateMessage.Text
 	user := c.usersDb[chatID]
+
+
 	// I can't validate key at this stage. The only way to validate key is to send test sequence (see case 3)
 	// Since this part is oftenly get an usernamecaught exeption, we debug what user input as key. It's bad, I know, but usernametil we got key validation we need this part.
-	log.Println("Key promt: ", gptKey)
-	user.AiSession.GptKey = gptKey // store key in memory
+	//log.Println("Key promt: ", gptKey)
+	//user.AiSession.GptKey = gptKey // store key in memory
 
-	msg := tgbotapi.NewMessage(user.ID, msgTemplates["case1"])
-	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("GPT-3.5")),
-		//tgbotapi.NewKeyboardButton("GPT-4"),
-		//tgbotapi.NewKeyboardButton("Codex")),
-	)
-	c.bot.Send(msg)
+	//TODO get user network and check if it is openai or localai
+	network := user.Network
 
-	user.DialogStatus = 2
-	c.usersDb[chatID] = user
+	//TODO render different menu with different models for openai and localhost
+	if (network == "openai") {
+		c.RenderModelMenuOAI(chatID)
+	}
+	if (network == "localai") {
+		c.RenderModelMenuLAI(chatID)
+	} else {
+		ok = false
+	}
+
+	if (ok) {
+		user.DialogStatus = 2
+		c.usersDb[chatID] = user
+	} else {
+		user.DialogStatus = 7
+		c.usersDb[chatID] = user
+	}
+
+}
+
+func (c *Commander) HandleModelChoose(updateMessage *tgbotapi.Message) {
+	chatID := updateMessage.From.ID
+	model_name := updateMessage.Text
+	//user := c.usersDb[chatID]
+	switch model_name {
+	case "GPT-3.5":
+		c.ModelGPT3DOT5(updateMessage)
+	case "wizard-uncensored-13b":
+	 	c.attachModel(model_name,chatID)
+		c.ChangeDialogStatus(chatID,3)
+	case "wizard-uncensored-30b":
+		c.attachModel(model_name,chatID)
+		c.ChangeDialogStatus(chatID,3)
+	default:
+		c.WrongModel(updateMessage)
+	}
 }
 
 // Message: "Choose language. If you have different languages then listed, then just send 'Hello' at your desired language".
@@ -125,6 +189,67 @@ func (c *Commander) ModelGPT4(updateMessage *tgbotapi.Message) {
 	c.usersDb[chatID] = user
 }
 
+// low level attach model name to user profile
+func (c *Commander) attachModel(model_name string, chatID int64) {
+		// TODO: Write down user choise
+		log.Printf("Model selected: %s\n", model_name)
+
+		
+		user := c.usersDb[chatID]
+	
+		modelName := model_name 
+		user.AiSession.GptModel = modelName
+		msg := tgbotapi.NewMessage(user.ID, "your session model: "+modelName)
+		c.bot.Send(msg)
+		c.usersDb[chatID] = user
+}
+
+// internal for attach api key to a user
+func (c *Commander) AttachKey(gpt_key string, chatID int64) {
+	log.Println("Key promt: ", gpt_key)
+	user := c.usersDb[chatID]
+	user.AiSession.GptKey = gpt_key // store key in memory
+	c.usersDb[chatID] = user
+}
+
+func (c *Commander) AttachNetwork(network string, chatID int64) {
+	//chatID := updateMessage.From.ID
+	user := c.usersDb[chatID]
+	user.Network = network
+	c.usersDb[chatID] = user
+}
+
+
+// Dangerouse!
+func (c *Commander) ChangeDialogStatus(chatID int64, ds int8) {
+	user := c.usersDb[chatID]
+	user.DialogStatus = ds
+}
+
+
+
+func (c *Commander) RenderModelMenuOAI(chatID int64) {
+	msg := tgbotapi.NewMessage(chatID, msgTemplates["case1"])
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("GPT-3.5")),
+		//tgbotapi.NewKeyboardButton("GPT-4"),
+		//tgbotapi.NewKeyboardButton("Codex")),
+	)
+	c.bot.Send(msg)
+}
+
+
+func (c *Commander) RenderModelMenuLAI(chatID int64) {
+	msg := tgbotapi.NewMessage(chatID, msgTemplates["case1"])
+	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("wizard-uncensored-13b"),
+		tgbotapi.NewKeyboardButton("wizard-uncensored-30b")),
+	)
+	c.bot.Send(msg)
+}
+
 // update Dialog_Status = 2
 func (c *Commander) WrongModel(updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
@@ -185,3 +310,6 @@ func (c *Commander) CodexSequence(updateMessage *tgbotapi.Message) {
 	//user.DialogStatus = 0
 	//userDatabase[chatID] = user
 }
+
+
+

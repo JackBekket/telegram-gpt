@@ -56,27 +56,39 @@ func main() {
 			// first check for user status, (for a new user status 0 is set automatically),
 			// then user reply for the first bot message is logged to a database as name AND user status is updated
 			case 0:
-				comm.InputYourAPIKey(update.Message)
+				comm.InputYourAPIKey(update.Message) // input key then net then model
 			case 1:
 				comm.ChooseModel(update.Message)
 
 			case 2:
+				comm.HandleModelChoose(update.Message)
+				/*
 				switch update.Message.Text {
 				case "GPT-3.5":
 					comm.ModelGPT3DOT5(update.Message)
-				/* case "Codex":
-				comm.ModelCodex(update.Message) */
 				// case "GPT-4":
 				// 	comm.ModelGPT4(update.Message)
 				default:
 					comm.WrongModel(update.Message)
 				}
+				*/
 			case 3:
 				comm.ConnectingToOpenAiWithLanguage(update.Message,local_access_pwd)
 			case 4:
 				comm.DialogSequence(update.Message)
 			case 5:
 				comm.CodexSequence(update.Message)
+			case 6:
+				comm.ChooseNetwork(update.Message)	// should be in order after 0 and before 1.  input dialog status 0 output 7
+			case 7:		// fetch network
+				switch update.Message.Text {
+				case "openai" :
+					comm.AttachNetwork("openai", update.Message.From.ID)
+					comm.ChangeDialogStatus(update.Message.From.ID,1)	// GOTO dialog status 1
+				case "localai" :
+					comm.AttachNetwork("localai", update.Message.From.ID)
+					comm.ChangeDialogStatus(update.Message.From.ID,1)
+				}
 			}
 
 		}
