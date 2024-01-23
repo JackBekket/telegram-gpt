@@ -204,6 +204,13 @@ func (c *Commander) attachModel(model_name string, chatID int64) {
 		c.usersDb[chatID] = user
 }
 
+func (c *Commander) AttachNetworkAndUpdDialog(network string, chatID int64) {
+	c.AttachNetwork(network,chatID)
+	user := c.usersDb[chatID]
+	user.DialogStatus = 1
+	c.usersDb[chatID] = user
+}
+
 // internal for attach api key to a user
 func (c *Commander) AttachKey(gpt_key string, chatID int64) {
 	log.Println("Key promt: ", gpt_key)

@@ -84,13 +84,13 @@ func main() {
 			case 7:		// fetch network
 				switch update.Message.Text {
 				case "openai" :
-					comm.AttachNetwork("openai", update.Message.From.ID)
+					comm.AttachNetworkAndUpdDialog("openai", update.Message.From.ID)
 					//comm.ChangeDialogStatus(update.Message.From.ID,1)	// GOTO dialog status 1
-					user.DialogStatus = 1
+					//user.DialogStatus = 1
 				case "localai" :
-					comm.AttachNetwork("localai", update.Message.From.ID)
+					comm.AttachNetworkAndUpdDialog("localai", update.Message.From.ID)
 					//comm.ChangeDialogStatus(update.Message.From.ID,1)
-					user.DialogStatus = 1
+					//user.DialogStatus = 1
 				}
 			}
 
