@@ -43,9 +43,8 @@ func SetupSequenceWithKey(
 		client_check, err := CreateLocalhostClientWithCheck(local_ap,gptKey)
 		if err != nil {
 			errorMessage(err,bot,user)
-		} else {
-			client = client_check
-		}
+		} 
+		client = client_check
 	}
 
 	//client := CreateClient(gptKey) // creating client (but we don't know if it works)
