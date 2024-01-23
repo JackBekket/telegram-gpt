@@ -45,7 +45,7 @@ func (c *Commander) ChooseNetwork(updateMessage *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(user.ID, msgTemplates["case1"])
 	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("openAI"),
+			tgbotapi.NewKeyboardButton("openai"),
 			tgbotapi.NewKeyboardButton("localai")),
 		
 	)
@@ -224,6 +224,9 @@ func (c *Commander) AttachNetwork(network string, chatID int64) {
 // Dangerouse!
 func (c *Commander) ChangeDialogStatus(chatID int64, ds int8) {
 	user := c.usersDb[chatID]
+	old_status := user.DialogStatus
+	log.Println("dialog status changed, old status is ", old_status)
+	log.Println("new status is ", ds)
 	user.DialogStatus = ds
 }
 
