@@ -217,6 +217,7 @@ func (c *Commander) AttachNetwork(network string, chatID int64) {
 	user := c.usersDb[chatID]
 	user.Network = network
 	c.usersDb[chatID] = user
+	log.Println("network attached")
 }
 
 

@@ -52,6 +52,7 @@ func main() {
 			comm.CheckAdmin(adminData, update.Message)
 		}
 		if ok {
+			log.Println("user dialog status:", user.DialogStatus)
 			switch user.DialogStatus {
 			// first check for user status, (for a new user status 0 is set automatically),
 			// then user reply for the first bot message is logged to a database as name AND user status is updated
