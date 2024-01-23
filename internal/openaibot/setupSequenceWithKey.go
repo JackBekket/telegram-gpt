@@ -27,6 +27,7 @@ func SetupSequenceWithKey(
 	log.Println("user GPT key from session: ", gptKey)
 	u_network := user.Network
 	log.Println("user network from session: ", u_network)
+	log.Println("user model from session: ", user.AiSession.GptModel)
 	var client *openai.Client
 	//u_pwd := 
 
@@ -51,6 +52,7 @@ func SetupSequenceWithKey(
 	//log.Println("Setting up sequence with key")
 	//client := CreateLocalhostClientWithCheck(local_ap,gptKey)
 	log.Println("local_ap: ", local_ap)
+	log.Println("client: ", client)
 	//log.Println("client: ", client.config)
 	user.AiSession.GptClient = *client
 
