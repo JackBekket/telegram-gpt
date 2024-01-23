@@ -80,15 +80,17 @@ func main() {
 			case 5:
 				comm.CodexSequence(update.Message)
 			case 6:
-				comm.ChooseNetwork(update.Message)	// should be in order after 0 and before 1.  input dialog status 0 output 7
+				comm.ChooseNetwork(update.Message)	//  input dialog status 0 output 7
 			case 7:		// fetch network
 				switch update.Message.Text {
 				case "openai" :
 					comm.AttachNetwork("openai", update.Message.From.ID)
-					comm.ChangeDialogStatus(update.Message.From.ID,1)	// GOTO dialog status 1
+					//comm.ChangeDialogStatus(update.Message.From.ID,1)	// GOTO dialog status 1
+					user.DialogStatus = 1
 				case "localai" :
 					comm.AttachNetwork("localai", update.Message.From.ID)
-					comm.ChangeDialogStatus(update.Message.From.ID,1)
+					//comm.ChangeDialogStatus(update.Message.From.ID,1)
+					user.DialogStatus = 1
 				}
 			}
 

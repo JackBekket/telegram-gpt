@@ -66,7 +66,7 @@ func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
 	//gptKey := updateMessage.Text
 	user := c.usersDb[chatID]
-
+	log.Println("chooseModel function worked")
 
 	// I can't validate key at this stage. The only way to validate key is to send test sequence (see case 3)
 	// Since this part is oftenly get an usernamecaught exeption, we debug what user input as key. It's bad, I know, but usernametil we got key validation we need this part.
@@ -221,7 +221,7 @@ func (c *Commander) AttachNetwork(network string, chatID int64) {
 }
 
 
-// Dangerouse!
+// Dangerouse! NOTE -- probably work only internal
 func (c *Commander) ChangeDialogStatus(chatID int64, ds int8) {
 	user := c.usersDb[chatID]
 	old_status := user.DialogStatus
@@ -238,7 +238,6 @@ func (c *Commander) RenderModelMenuOAI(chatID int64) {
 		tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("GPT-3.5")),
 		//tgbotapi.NewKeyboardButton("GPT-4"),
-		//tgbotapi.NewKeyboardButton("Codex")),
 	)
 	c.bot.Send(msg)
 }
