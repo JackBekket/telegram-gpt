@@ -63,10 +63,8 @@ func main() {
 				switch update.Message.Text {
 				case "GPT-3.5":
 					comm.ModelGPT3DOT5(update.Message)
-				/* case "Codex":
-				comm.ModelCodex(update.Message) */
-				// case "GPT-4":
-				// 	comm.ModelGPT4(update.Message)
+				 case "GPT-4":
+				 	comm.ModelGPT4(update.Message)
 				default:
 					comm.WrongModel(update.Message)
 				}

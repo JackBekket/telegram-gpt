@@ -40,9 +40,8 @@ func (c *Commander) ChooseModel(updateMessage *tgbotapi.Message) {
 	msg := tgbotapi.NewMessage(user.ID, msgTemplates["case1"])
 	msg.ReplyMarkup = tgbotapi.NewOneTimeReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("GPT-3.5")),
-		//tgbotapi.NewKeyboardButton("GPT-4"),
-		//tgbotapi.NewKeyboardButton("Codex")),
+			tgbotapi.NewKeyboardButton("GPT-3.5"),
+			tgbotapi.NewKeyboardButton("GPT-4")),
 	)
 	c.bot.Send(msg)
 
@@ -108,7 +107,8 @@ func (c *Commander) ModelGPT4(updateMessage *tgbotapi.Message) {
 	chatID := updateMessage.From.ID
 	user := c.usersDb[chatID]
 
-	modelName := openai.GPT4 // gpt-4
+	//modelName := openai.GPT4 // gpt-4
+	modelName := openai.GPT4TurboPreview
 	user.AiSession.GptModel = modelName
 	msg := tgbotapi.NewMessage(user.ID, "your session model: "+modelName)
 	c.bot.Send(msg)
