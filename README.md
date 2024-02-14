@@ -1,9 +1,8 @@
 # telegram-gpt
 Telegram bot to operate with OpenAI chat-GPT
 
-Now supports chatGPT 3.5 and Codex models for code-generation
-
-https://t.me/Ada_chatgpt3_bot
+Now supports chatGPT 4 and Codex models for code-generation
+openai version - https://t.me/sonm_gpt_bot
 
 I use https://github.com/sashabaranov/go-openai for interaction with openAI
 
